@@ -1,0 +1,308 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  # Keep llama.cpp linked into the executable instead of depending on a
+  # runner-local shared library. Do not add target-cpu=native flags here.
+  LLAMA_BUILD_SHARED_LIBS: "0"
+  # Ensure the embedded llama.cpp runtime uses /MT for the Windows artifact.
+  # CMake ignores this setting on non-MSVC targets.
+  LLAMA_STATIC_CRT: "1"
+
+jobs:
+  verify-release-input:
+    name: Verify tag and source tree
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@1.98.1
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-quality
+
+      - name: Require an annotated version tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git cat-file -t "$GITHUB_REF_NAME")" = "tag"
+
+      - name: Require the tag to match the package version
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag_version="${GITHUB_REF_NAME#v}"
+          package_version="$(cargo metadata --locked --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "localjev-grep") | .version')"
+          test -n "$package_version"
+          test "$tag_version" = "$package_version"
+
+      - name: Re-run the complete local CI contract
+        run: cargo xtask ci
+
+  build-package:
+    name: Build and package (${{ matrix.name }})
+    needs: verify-release-input
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            # This fixes the archive's glibc baseline at Ubuntu 22.04.
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            archive_format: tar.gz
+            executable_suffix: ""
+          - name: macOS Intel
+            os: macos-15-intel
+            target: x86_64-apple-darwin
+            archive_format: tar.gz
+            executable_suffix: ""
+          - name: macOS Apple Silicon
+            os: macos-14
+            target: aarch64-apple-darwin
+            archive_format: tar.gz
+            executable_suffix: ""
+          - name: Windows x64
+            os: windows-2022
+            target: x86_64-pc-windows-msvc
+            archive_format: zip
+            executable_suffix: ".exe"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.98.1
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+
+      - name: Build a native, locked release binary
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          cmake --version
+          cargo build --locked --release --package localjev-grep --target $env:TARGET
+
+      - name: Install the pinned license inventory generator
+        shell: pwsh
+        run: |
+          cargo install cargo-about --version 0.9.2 --locked --features cli
+
+      - name: Generate the locked third-party license inventory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          cargo about generate `
+            --config scripts/release/cargo-about.toml `
+            --manifest-path Cargo.toml `
+            --all-features `
+            --locked `
+            --fail `
+            --output-file dist/THIRD_PARTY_LICENSES.html `
+            scripts/release/third-party-licenses.hbs
+
+      - name: Create the release archive and checksum
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+          ARCHIVE_FORMAT: ${{ matrix.archive_format }}
+          EXECUTABLE_SUFFIX: ${{ matrix.executable_suffix }}
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          ./scripts/release/package.ps1 `
+            -BinaryPath "target/$env:TARGET/release/jgrep$env:EXECUTABLE_SUFFIX" `
+            -Version $version `
+            -Target $env:TARGET `
+            -Format $env:ARCHIVE_FORMAT `
+            -OutputDirectory "dist" `
+            -ThirdPartyLicensesPath "dist/THIRD_PARTY_LICENSES.html" `
+            -Repository $env:GITHUB_REPOSITORY `
+            -Ref $env:GITHUB_REF_NAME
+
+      - name: Extract and run the packaged binary on its native runner
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+          ARCHIVE_FORMAT: ${{ matrix.archive_format }}
+          EXECUTABLE_SUFFIX: ${{ matrix.executable_suffix }}
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          $packageRoot = "localjev-grep-v$version-$env:TARGET"
+          $archive = "dist/$packageRoot.$env:ARCHIVE_FORMAT"
+          $checksum = "$archive.sha256"
+          if (-not (Test-Path -LiteralPath $archive)) { throw "missing archive: $archive" }
+          if (-not (Test-Path -LiteralPath $checksum)) { throw "missing checksum: $checksum" }
+
+          $expected = (Get-Content -LiteralPath $checksum -Raw).Trim().Split(" ")[0]
+          $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "archive checksum does not match $checksum" }
+
+          $verifyDirectory = Join-Path $env:RUNNER_TEMP "jgrep-release-verify"
+          New-Item -ItemType Directory -Force -Path $verifyDirectory | Out-Null
+          if ($env:ARCHIVE_FORMAT -eq "zip") {
+            Expand-Archive -LiteralPath $archive -DestinationPath $verifyDirectory -Force
+          } else {
+            & tar -xzf $archive -C $verifyDirectory
+            if ($LASTEXITCODE -ne 0) { throw "could not extract $archive" }
+          }
+
+          $contents = Join-Path $verifyDirectory $packageRoot
+          @("README.md", "LICENSE", "NOTICE", "LICENSES", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES.html", "SOURCE.txt") | ForEach-Object {
+            if (-not (Test-Path -LiteralPath (Join-Path $contents $_))) {
+              throw "release archive is missing required content: $_"
+            }
+          }
+          $binary = Join-Path $contents "jgrep$env:EXECUTABLE_SUFFIX"
+          & $binary --version
+          $match = @("alpha", "release needle") | & $binary -F "release needle"
+          if ((@($match) -join "`n") -ne "release needle") {
+            throw "packaged binary failed the stdin fixed-string smoke test"
+          }
+
+      - name: Upload checked release asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error
+
+  release-model-smoke:
+    name: Real Qwen release gate (${{ matrix.name }})
+    needs: verify-release-input
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            executable_suffix: ""
+          - name: macOS Intel
+            os: macos-15-intel
+            target: x86_64-apple-darwin
+            executable_suffix: ""
+          - name: macOS Apple Silicon
+            os: macos-14
+            target: aarch64-apple-darwin
+            executable_suffix: ""
+          - name: Windows x64
+            os: windows-2022
+            target: x86_64-pc-windows-msvc
+            executable_suffix: ".exe"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.98.1
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-semantic-${{ matrix.target }}
+
+      - name: Restore the pinned Qwen model
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/jgrep-model
+          key: qwen2.5-0.5b-instruct-q8_0-6dd44a1fb35d11b5d1b28902876ce3cc9e882d0e-ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e-${{ matrix.target }}
+
+      - name: Build the locked semantic binary
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+        run: cargo build --locked --release --package localjev-grep --target $env:TARGET
+
+      - name: Download, validate, and score positive and negative real-model fixtures
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+          EXECUTABLE_SUFFIX: ${{ matrix.executable_suffix }}
+          JGREP_MODEL_DIR: ${{ runner.temp }}/jgrep-model
+        run: |
+          $binary = "target/$env:TARGET/release/jgrep$env:EXECUTABLE_SUFFIX"
+          & $binary --download-model
+
+          $fixture = Join-Path $env:RUNNER_TEMP "jgrep-release-semantic-smoke.txt"
+          @(
+            "The network connection failure interrupted the upload."
+            "The garden needs watering this afternoon."
+          ) | Set-Content -LiteralPath $fixture -Encoding utf8
+
+          # This fixed Q8_0 fixture was measured locally at 0.584 for the
+          # positive first line and 0.048 for the unrelated negative second
+          # line. It verifies both selections at 0.5 without presenting the
+          # score as calibrated.
+          $result = @(& $binary --offline --device cpu --threshold 0.5 "network connection failure" $fixture)
+          $expected = "The network connection failure interrupted the upload."
+          if ((@($result) -join "`n") -ne $expected) {
+            throw "semantic release gate did not select the positive fixture and reject the negative fixture"
+          }
+
+  publish:
+    name: Verify checksums and publish GitHub Release
+    needs: [build-package, release-model-smoke]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download all native release assets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Normalize and verify SHA-256 manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release-assets
+          shopt -s nullglob
+          manifests=( *.sha256 )
+          test "${#manifests[@]}" -eq 4
+          for manifest in "${manifests[@]}"; do
+            sha256sum --check "$manifest"
+          done
+          cat "${manifests[@]}" | LC_ALL=C sort -k2,2 > SHA256SUMS
+          sha256sum --check SHA256SUMS
+
+      - name: Publish immutable release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "A release already exists for $GITHUB_REF_NAME; refusing to overwrite it." >&2
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" release-assets/* \
+            --verify-tag \
+            --title "localjev-grep $GITHUB_REF_NAME" \
+            --generate-notes

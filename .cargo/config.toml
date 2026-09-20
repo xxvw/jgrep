@@ -1,0 +1,11 @@
+[alias]
+xtask = "run --locked --package xtask --"
+
+[env]
+# The embedded llama.cpp build has its own MSVC runtime setting. Keep it in
+# step with the Rust executable so a local Windows build does not depend on a
+# runner- or developer-installed VC++ redistributable.
+LLAMA_STATIC_CRT = { value = "1", force = true }
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

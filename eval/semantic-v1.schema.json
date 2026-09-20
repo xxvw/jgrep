@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/xxvw/localjev-grep/blob/main/eval/semantic-v1.schema.json",
+  "title": "localjev-grep semantic evaluation case v1",
+  "description": "One JSON Lines record describing an independently judged semantic-search case.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "query",
+    "text",
+    "expected_match"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$",
+      "description": "Stable, unique case identifier."
+    },
+    "query_group": {
+      "type": "string",
+      "enum": ["network_failure", "authentication_rejected", "data_loss"],
+      "description": "Conceptual query family; records in a group share the same query."
+    },
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Natural-language semantic context supplied to jgrep."
+    },
+    "query_language": {
+      "type": "string",
+      "enum": ["en", "ja", "es"],
+      "description": "BCP 47-style tag for the query language."
+    },
+    "language": {
+      "type": "string",
+      "enum": ["en", "ja", "zh-CN", "ko", "es", "de", "ru", "fr", "pt-BR", "it", "ar", "hi"],
+      "description": "BCP 47-style tag for the input text language."
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\r\\n]+$",
+      "description": "A single input line to classify."
+    },
+    "case_kind": {
+      "type": "string",
+      "enum": ["positive", "negated", "false_positive_challenge"],
+      "description": "Annotation category, independent of the expected boolean."
+    },
+    "expected_match": {
+      "type": "boolean",
+      "description": "Human annotation for whether this text satisfies the semantic query."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"case_kind": {"const": "positive"}},
+        "required": ["case_kind"]
+      },
+      "then": {
+        "properties": {"expected_match": {"const": true}}
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "case_kind": {
+            "enum": ["negated", "false_positive_challenge"]
+          }
+        },
+        "required": ["case_kind"]
+      },
+      "then": {
+        "properties": {"expected_match": {"const": false}}
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+localjev-grep
+Copyright (C) 2026 localjev-grep contributors
+
+This product is independently developed. It is not affiliated with, endorsed
+by, sponsored by, or distributed by TypeSafe, Jev, Qwen, Alibaba Cloud,
+Hugging Face, llama.cpp, or their respective contributors.
+
+The source code in this repository is offered under GPL-3.0-or-later; see
+LICENSE. Third-party components and the optional downloaded model remain
+subject to their own licenses and notices. See THIRD_PARTY_NOTICES.md.

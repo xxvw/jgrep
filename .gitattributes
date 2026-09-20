@@ -1,0 +1,24 @@
+# Keep source and documentation portable across macOS, Windows, and Linux.
+* text=auto eol=lf
+
+*.rs text
+*.toml text
+*.md text
+*.yml text
+*.yaml text
+*.json text
+*.ps1 text
+*.sh text
+
+# Model and packaged artifacts are not text.
+*.gguf binary
+*.zip binary
+*.gz binary
+*.xz binary
+*.tar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+
+# Local build output must never appear in a source archive.
+/target export-ignore

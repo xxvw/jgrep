@@ -1,0 +1,25 @@
+# Rust build output
+/target/
+**/*.rs.bk
+
+# Local model artifacts and interrupted downloads
+*.gguf
+*.gguf.part
+*.gguf.tmp
+/models/
+/model-cache/
+
+# Test and coverage output
+/coverage/
+/test-results/
+*.profraw
+*.profdata
+
+# Local development configuration and editor files
+/.cargo/config.local.toml
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>localjev-grep locked third-party licenses</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.45; margin: 2rem auto; max-width: 72rem; padding: 0 1rem; }
+    pre { overflow-x: auto; white-space: pre-wrap; }
+    .license { border-top: 1px solid #bbb; margin-top: 2rem; padding-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Locked third-party license inventory</h1>
+  <p>
+    This document is generated during release packaging with the pinned
+    <code>cargo-about</code> tool from the repository's locked Cargo graph.
+    It includes the resolved package versions and license texts used by the
+    supported native targets. It is not a replacement for
+    <code>THIRD_PARTY_NOTICES.md</code>.
+  </p>
+  <h2>License overview</h2>
+  <ul>
+  {{#each overview}}
+    <li><a href="#{{id}}">{{name}}</a> ({{count}} packages)</li>
+  {{/each}}
+  </ul>
+  {{#each licenses}}
+    <section class="license">
+      {{#if first_of_kind}}
+      <h2 id="{{id}}">{{name}}</h2>
+      <pre>{{text}}</pre>
+      {{/if}}
+      <h3 id="{{id}}-{{@index}}">Used by</h3>
+      <ul>
+      {{#each used_by}}
+        <li>
+          {{#if crate.repository}}
+          <a href="{{crate.repository}}">{{crate.name}} {{crate.version}}</a>
+          {{else}}
+          <a href="https://crates.io/crates/{{crate.name}}">{{crate.name}} {{crate.version}}</a>
+          {{/if}}
+        </li>
+      {{/each}}
+      </ul>
+    </section>
+  {{/each}}
+</body>
+</html>
