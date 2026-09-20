@@ -229,6 +229,26 @@ function Read-ExpectedChecksum {
     return $matches[0].Groups["hash"].Value
 }
 
+function Get-Sha256 {
+    param([Parameter(Mandatory)][string]$Path)
+
+    $stream = [System.IO.File]::Open(
+        $Path,
+        [System.IO.FileMode]::Open,
+        [System.IO.FileAccess]::Read,
+        [System.IO.FileShare]::Read
+    )
+    $algorithm = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $hash = $algorithm.ComputeHash($stream)
+        return ([System.BitConverter]::ToString($hash)).Replace("-", "").ToLowerInvariant()
+    }
+    finally {
+        $algorithm.Dispose()
+        $stream.Dispose()
+    }
+}
+
 function Copy-ZipEntryToFile {
     param(
         [Parameter(Mandatory)][string]$ArchivePath,
@@ -409,7 +429,7 @@ try {
     }
 
     $expectedChecksum = Read-ExpectedChecksum -ManifestPath $checksumPath -ArchiveName $archiveName
-    $actualChecksum = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash
+    $actualChecksum = Get-Sha256 -Path $archivePath
     if (-not [string]::Equals(
             $expectedChecksum,
             $actualChecksum,

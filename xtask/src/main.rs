@@ -558,7 +558,7 @@ fn check_docs() -> Result<(), String> {
     let powershell_installer = read_text("scripts/install.ps1")?;
     for required in [
         "-AssetDirectory",
-        "Get-FileHash",
+        "Get-Sha256",
         "Copy-ZipEntryToFile",
         "version mismatch",
         "returned tag",
