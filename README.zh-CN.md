@@ -92,10 +92,10 @@ Get-Content .\service.log | .\jgrep.exe '数据库登录被拒绝'
 | `-l` / `-L`、`-q`、`-m <NUM>`、`-v` | 输出有 / 无匹配的文件名、静默并在首个匹配停止、限制选中行数、反转最终选择。 |
 | `-r`、`-A` / `-B` / `-C` | 递归搜索，以及显示后方 / 前方 / 周围的上下文行。 |
 | `--include <GLOB>` / `--exclude <GLOB>` | 限制或跳过递归搜索的路径。 |
-| `--color <auto|always|never>`、`--line-buffered` | 控制 ANSI 高亮；为流式管道逐行刷新输出。 |
+| `--color <auto\|always\|never>`、`--line-buffered` | 控制 ANSI 高亮；为流式管道逐行刷新输出。 |
 | `--ai`、`--ai-max-results <NUM>` | 为代理输出 `path:line` 位置，并设置整个调用的最大结果数（默认 50）。 |
 | `--threshold <0..1>`、`--score` | 设置语义相关性阈值（默认 `0.5`）；在输出中显示语义分数。 |
-| `--model <PATH>`、`--download-model`、`--offline`、`--device <auto|cpu>` | 指定本地 GGUF 模型、下载默认模型、禁止网络访问、选择本地推理设备。 |
+| `--model <PATH>`、`--download-model`、`--offline`、`--device <auto\|cpu>` | 指定本地 GGUF 模型、下载默认模型、禁止网络访问、选择本地推理设备。 |
 
 语义专用选项不能用于词法模式；`--offline` 与 `--download-model` 不能同时使用。以 `-` 开头的模式或路径前请使用 `--`。
 

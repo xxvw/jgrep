@@ -91,10 +91,10 @@ Get-Content .\service.log | .\jgrep.exe --offline 'connection was reset'
 | `-n`, `-H`, `-h`, `-c`, `-l`, `-L`, `-q`, `-m <NUM>` | 줄 번호, 파일 이름, 개수, 파일 이름만 출력, 조기 종료를 제어합니다. `-m 0`은 모델 작업을 하지 않습니다. |
 | `-r`, `--include <GLOB>`, `--exclude <GLOB>` | 결정적인 경로 순서로 재귀 검색하고 대상 경로를 제한합니다. |
 | `-A`, `-B`, `-C` | 뒤쪽, 앞쪽 또는 주변 문맥 줄을 함께 출력합니다. |
-| `--color <auto|always|never>`, `--line-buffered` | ANSI 색상과 스트리밍 파이프의 줄 단위 flush를 제어합니다. |
+| `--color <auto\|always\|never>`, `--line-buffered` | ANSI 색상과 스트리밍 파이프의 줄 단위 flush를 제어합니다. |
 | `--ai`, `--ai-max-results <NUM>` | 에이전트용 `path:line` 위치 출력과 호출 전체의 최대 결과 수(기본 50)를 제어합니다. |
 | `--threshold <0..1>`, `--score` | 의미 검색의 관련성 기준값(기본값 `0.5`)과 선택된 줄의 점수를 제어합니다. |
-| `--model <PATH>`, `--download-model`, `--offline`, `--device <auto|cpu>` | 로컬 모델 파일, 캐시 준비, 네트워크 차단, 추론 장치를 제어합니다. |
+| `--model <PATH>`, `--download-model`, `--offline`, `--device <auto\|cpu>` | 로컬 모델 파일, 캐시 준비, 네트워크 차단, 추론 장치를 제어합니다. |
 
 의미 전용 옵션은 일반 검색 모드에서 오류가 됩니다. `-`로 시작하는 문맥이나 경로 앞에는 `--`를 둡니다.
 

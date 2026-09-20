@@ -148,7 +148,7 @@ lexical modes, so a typo cannot silently change how a query is interpreted.
 | `-A`, `-B`, `-C` | Include trailing, leading, or surrounding context lines. |
 | `--include <GLOB>` | Limit recursive candidates to matching paths. |
 | `--exclude <GLOB>` | Skip matching recursive paths. |
-| `--color <auto|always|never>` | Control ANSI highlighting. `auto` disables it when stdout is a pipe. |
+| `--color <auto\|always\|never>` | Control ANSI highlighting. `auto` disables it when stdout is a pipe. |
 | `--line-buffered` | Flush each output line for streaming pipelines. |
 | `--ai` | Emit compact `path:line` locations for coding agents, without source text. |
 | `--ai-max-results <NUM>` | Set the positive, whole-invocation location limit for `--ai`; default `50`. |
@@ -157,7 +157,7 @@ lexical modes, so a typo cannot silently change how a query is interpreted.
 | `--model <PATH>` | Use an explicit local GGUF model file. |
 | `--download-model` | Download the pinned default model first; with no context, exit after the download. |
 | `--offline` | Never use the network; fail if no valid local model is available. |
-| `--device <auto|cpu>` | Select the local inference device. |
+| `--device <auto\|cpu>` | Select the local inference device. |
 
 Use `--` before a pattern or path that begins with `-`.
 
