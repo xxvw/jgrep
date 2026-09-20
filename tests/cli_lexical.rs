@@ -12,7 +12,9 @@ use std::io::{BufRead, BufReader, Write};
 use std::process::{Command as ProcessCommand, Stdio};
 use std::sync::mpsc;
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+#[cfg(unix)]
+use std::time::Instant;
 use tempfile::TempDir;
 
 fn jgrep() -> AssertCommand {
