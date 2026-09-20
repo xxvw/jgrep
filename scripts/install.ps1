@@ -38,6 +38,24 @@ function Fail {
     throw "jgrep installer: $Message"
 }
 
+function Get-ExistingPathItem {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Description
+    )
+
+    try {
+        $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+        return $item
+    }
+    catch [System.Management.Automation.ItemNotFoundException] {
+        return $null
+    }
+    catch {
+        Fail "could not inspect ${Description}: $Path ($($_.Exception.Message))"
+    }
+}
+
 function Assert-NoReparsePointInPath {
     param(
         [Parameter(Mandatory)][string]$Path,
@@ -63,7 +81,7 @@ function Assert-NoReparsePointInPath {
             continue
         }
         $currentPath = Join-Path $currentPath $component
-        $item = Get-Item -LiteralPath $currentPath -Force -ErrorAction SilentlyContinue
+        $item = Get-ExistingPathItem -Path $currentPath -Description $Description
         if ($null -eq $item) {
             break
         }
@@ -171,7 +189,7 @@ function Save-Download {
         }
         catch {
             if ($attempt -eq 3) {
-                Fail "could not download $Uri: $($_.Exception.Message)"
+                Fail "could not download ${Uri}: $($_.Exception.Message)"
             }
             Start-Sleep -Seconds $attempt
         }
@@ -401,7 +419,7 @@ try {
     }
 
     $InstallDir = Assert-NoReparsePointInPath -Path $InstallDir -Description "installation directory"
-    $installDirectoryItem = Get-Item -LiteralPath $InstallDir -Force -ErrorAction SilentlyContinue
+    $installDirectoryItem = Get-ExistingPathItem -Path $InstallDir -Description "installation directory"
     if ($null -ne $installDirectoryItem) {
         if (($installDirectoryItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
             Fail "installation directory is a symbolic link or reparse point: $InstallDir"
@@ -416,7 +434,7 @@ try {
     $InstallDir = Assert-NoReparsePointInPath -Path $InstallDir -Description "installation directory"
     $destination = Join-Path $InstallDir "jgrep.exe"
     Assert-NoReparsePointInPath -Path $destination -Description "installation destination" | Out-Null
-    $destinationItem = Get-Item -LiteralPath $destination -Force -ErrorAction SilentlyContinue
+    $destinationItem = Get-ExistingPathItem -Path $destination -Description "installation destination"
     if ($null -ne $destinationItem) {
         if (($destinationItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
             Fail "installation destination is a symbolic link or reparse point: $destination"

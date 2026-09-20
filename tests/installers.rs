@@ -439,8 +439,12 @@ fn windows_installer_verifies_and_installs_a_local_release_archive() {
         .output()
         .expect("create ancestor junction");
     assert_success(&ancestor_junction_output, "create ancestor junction");
-    let ancestor_attempt =
-        run_windows_installer(&asset_directory, &ancestor_link.join("bin"), VERSION, false);
+    let ancestor_attempt = run_windows_installer(
+        &asset_directory,
+        &ancestor_link.join("nested").join("bin"),
+        VERSION,
+        true,
+    );
     assert!(
         !ancestor_attempt.status.success(),
         "installer must reject an ancestor reparse point"
