@@ -82,7 +82,9 @@ Source builds use the pinned Rust toolchain in `rust-toolchain.toml`, CMake,
 and a C++ compiler that can build the embedded llama.cpp dependency. On Apple Silicon, the
 automatic device setting may use Metal; CPU execution is available on every
 supported platform. Release builds intentionally avoid host-specific CPU
-instructions.
+instructions. The Windows x64 archive uses the standard Microsoft Visual C++
+runtime; install the current Visual C++ Redistributable if it is not already
+available on the machine.
 
 ## Usage
 

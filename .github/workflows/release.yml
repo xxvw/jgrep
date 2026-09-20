@@ -16,9 +16,6 @@ env:
   # Keep llama.cpp linked into the executable instead of depending on a
   # runner-local shared library. Do not add target-cpu=native flags here.
   LLAMA_BUILD_SHARED_LIBS: "0"
-  # Ensure the embedded llama.cpp runtime uses /MT for the Windows artifact.
-  # CMake ignores this setting on non-MSVC targets.
-  LLAMA_STATIC_CRT: "1"
 
 jobs:
   verify-release-input:

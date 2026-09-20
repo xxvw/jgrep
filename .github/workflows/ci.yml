@@ -28,10 +28,6 @@ env:
   # llama.cpp defaults to static libraries. Keep release artifacts independent
   # of runner-local shared libraries.
   LLAMA_BUILD_SHARED_LIBS: "0"
-  # The Rust target config alone does not control llama.cpp's MSVC runtime.
-  # This is ignored on non-MSVC targets and makes the shipped Windows binary
-  # use the static CRT rather than the GitHub runner's VC++ redistributable.
-  LLAMA_STATIC_CRT: "1"
 
 jobs:
   quality:

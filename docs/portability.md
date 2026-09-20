@@ -24,3 +24,7 @@ Windows users can run the executable as `jgrep.exe`; PowerShell pipelines work
 with the same stdin behavior as other shells. For path filtering, prefer
 `--include '*.ext'` with `-r` rather than relying on shell wildcard expansion,
 which differs across shells.
+
+The Windows x64 archive links llama.cpp into `jgrep.exe` and uses the standard
+Microsoft Visual C++ runtime. Install the current Visual C++ Redistributable
+when that runtime is not already present.
