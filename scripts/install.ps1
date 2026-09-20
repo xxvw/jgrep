@@ -468,6 +468,7 @@ try {
     }
 
     $stagedBinary = Join-Path $InstallDir (".jgrep-" + [guid]::NewGuid().ToString("N") + ".exe")
+    $backupBinary = Join-Path $InstallDir (".jgrep-backup-" + [guid]::NewGuid().ToString("N") + ".exe")
     try {
         Copy-ZipEntryToFile -ArchivePath $archivePath -EntryName $entryName -Destination $stagedBinary
         if ((Get-Item -LiteralPath $stagedBinary).Length -le 0) {
@@ -483,7 +484,7 @@ try {
         }
 
         if ($null -ne $destinationItem) {
-            [System.IO.File]::Replace($stagedBinary, $destination, $null, $true)
+            [System.IO.File]::Replace($stagedBinary, $destination, $backupBinary, $true)
         }
         else {
             [System.IO.File]::Move($stagedBinary, $destination)
@@ -492,6 +493,9 @@ try {
     finally {
         if (Test-Path -LiteralPath $stagedBinary) {
             Remove-Item -LiteralPath $stagedBinary -Force
+        }
+        if (Test-Path -LiteralPath $backupBinary) {
+            Remove-Item -LiteralPath $backupBinary -Force
         }
     }
 
