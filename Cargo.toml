@@ -33,7 +33,7 @@ fs2 = "0.4.3"
 globset = "0.4.16"
 is-terminal = "0.4.16"
 regex = "1.11.2"
-sha2 = "0.10.9"
+sha2 = "0.11.0"
 thiserror = "2.0.12"
 ureq = { version = "3.0.11", default-features = true, optional = true }
 walkdir = "2.5.0"
