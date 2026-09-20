@@ -38,7 +38,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git cat-file -t "$GITHUB_REF_NAME")" = "tag"
+          # checkout may resolve the tag to its commit and omit the tag ref,
+          # even with full history. Fetch the tag object explicitly before
+          # checking that this release is based on an annotated tag.
+          git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
+          test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = "tag"
 
       - name: Require the tag to match the package version
         shell: bash
