@@ -119,6 +119,11 @@ jobs:
             throw "extended-regex stdin smoke test failed"
           }
 
+          $ai = @("alpha", "agent needle") | & $binary --ai -F "agent needle"
+          if ((@($ai) -join "`n") -ne "-:2") {
+            throw "compact AI location smoke test failed"
+          }
+
   semantic-model-smoke:
     name: Real Qwen semantic smoke (${{ matrix.name }})
     needs: native-smoke
@@ -195,8 +200,8 @@ jobs:
           # positive first line and 0.048 for the unrelated negative second
           # line. It verifies both selections at 0.5 without presenting the
           # score as calibrated.
-          $result = @(& $binary --offline --device cpu --threshold 0.5 "network connection failure" $fixture)
-          $expected = "The network connection failure interrupted the upload."
+          $result = @(& $binary --ai --offline --device cpu --threshold 0.5 "network connection failure" $fixture)
+          $expected = "{0}:1" -f $fixture
           if ((@($result) -join "`n") -ne $expected) {
-            throw "semantic model smoke test did not select the positive fixture and reject the negative fixture"
+            throw "semantic AI smoke test did not select the positive fixture and reject the negative fixture"
           }

@@ -106,12 +106,20 @@ compatibilidade completa.
 | `-v`, `-r`, `-A/-B/-C` | Inversão, pesquisa recursiva e linhas de contexto. |
 | `--include`, `--exclude`, `--color`, `--line-buffered` | Filtros de caminho, cor e flush por linha. |
 | `--threshold`, `--score` | Limiar semântico (padrão `0.5`) e exibição da pontuação. |
+| `--ai`, `--ai-max-results <N>` | Saída compacta de locais para agentes de programação e seu limite. |
 | `--model`, `--download-model`, `--offline`, `--device auto\|cpu` | Modelo, download, rede e dispositivo. |
 
 Use `--` antes de um contexto ou caminho que comece com `-`. Opções
 exclusivas da semântica, como `--threshold` e `--score`, são rejeitadas nos
 modos léxicos. `-m 0`, entrada vazia, ajuda e buscas léxicas não inicializam
 o modelo.
+
+`--ai` emite apenas locais compactos no formato `caminho:linha`: sem texto
+fonte correspondente, cor ANSI, pontuação ou linhas de contexto. O padrão é
+no máximo 50 locais em toda a execução; ajuste o limite com
+`--ai-max-results`. Em seguida, o agente de programação pode buscar somente
+os intervalos estreitos de linhas necessários, reduzindo o uso de tokens em
+chamadas de ferramentas.
 
 ## Limites e compatibilidade
 

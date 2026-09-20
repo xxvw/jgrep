@@ -12,7 +12,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::process::{Command as ProcessCommand, Stdio};
 use std::sync::mpsc;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tempfile::TempDir;
 
 fn jgrep() -> AssertCommand {
@@ -115,6 +115,112 @@ fn broken_piped_stdout_after_a_match_exits_without_line_buffering() {
     );
 }
 
+#[test]
+fn ai_output_handles_a_broken_pipe_without_a_false_limit_notice() {
+    let executable = std::env::var_os("CARGO_BIN_EXE_jgrep")
+        .expect("Cargo should expose the jgrep binary to integration tests");
+    let mut child = ProcessCommand::new(executable)
+        .args(["--ai", "-F", "needle"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("start jgrep");
+
+    drop(child.stdout.take().expect("piped stdout"));
+    let mut input = child.stdin.take().expect("piped stdin");
+    input
+        .write_all(b"needle delivered after stdout closes\n")
+        .expect("write stdin fixture");
+    input.flush().expect("flush stdin fixture");
+
+    let (sender, receiver) = mpsc::channel();
+    let waiter = thread::spawn(move || {
+        sender
+            .send(child.wait_with_output())
+            .expect("test receiver should remain open");
+    });
+    let output = receiver
+        .recv_timeout(Duration::from_secs(5))
+        .expect("jgrep should exit after a broken stdout pipe")
+        .expect("wait for jgrep");
+    drop(input);
+    waiter.join().expect("join jgrep waiter");
+
+    assert!(
+        output.status.success(),
+        "AI mode should tolerate EPIPE: {output:?}"
+    );
+    assert!(
+        output.stderr.is_empty(),
+        "a closed stdout pipe must not look like an AI result cap: {output:?}"
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn ai_cap_does_not_reopen_a_named_fifo() {
+    let root = tempfile::tempdir().expect("temporary FIFO fixture directory");
+    let fifo = root.path().join("stream.fifo");
+    let status = ProcessCommand::new("mkfifo")
+        .arg(&fifo)
+        .status()
+        .expect("create FIFO fixture");
+    assert!(
+        status.success(),
+        "mkfifo should create the fixture: {status}"
+    );
+
+    let (release_writer, wait_for_release) = mpsc::channel();
+    let writer_fifo = fifo.clone();
+    let writer = thread::spawn(move || {
+        let mut stream = fs::OpenOptions::new()
+            .write(true)
+            .open(writer_fifo)
+            .expect("open FIFO writer once jgrep starts reading");
+        stream
+            .write_all(b"needle from an open FIFO writer\n")
+            .expect("write FIFO fixture");
+        stream.flush().expect("flush FIFO fixture");
+        // Keep the producer open. A post-cap reopen of the FIFO would block
+        // here until this test releases it.
+        let _ = wait_for_release.recv_timeout(Duration::from_secs(10));
+    });
+
+    let executable = std::env::var_os("CARGO_BIN_EXE_jgrep")
+        .expect("Cargo should expose the jgrep binary to integration tests");
+    let mut child = ProcessCommand::new(executable)
+        .args(["--ai", "--ai-max-results", "1", "-F", "needle"])
+        .arg(&fifo)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .expect("start jgrep against FIFO");
+
+    let deadline = Instant::now() + Duration::from_secs(3);
+    let mut completed = None;
+    while Instant::now() < deadline {
+        if let Some(status) = child.try_wait().expect("poll jgrep process") {
+            completed = Some(status);
+            break;
+        }
+        thread::sleep(Duration::from_millis(25));
+    }
+
+    if completed.is_none() {
+        let _ = child.kill();
+    }
+    let _ = release_writer.send(());
+    let _ = child.wait();
+    writer.join().expect("join FIFO writer");
+
+    assert!(
+        completed.is_some_and(|status| status.success()),
+        "jgrep must finish after its AI cap without reopening an open FIFO"
+    );
+}
+
 fn write_file(root: &TempDir, relative_path: &str, contents: impl AsRef<[u8]>) {
     let path = root.path().join(relative_path);
     if let Some(parent) = path.parent() {
@@ -176,6 +282,153 @@ fn fixed_string_search_handles_files_and_filename_controls() {
         .assert()
         .success()
         .stdout("needle in one\nneedle in two\n");
+}
+
+#[test]
+fn ai_mode_emits_compact_locations_with_a_global_budget() {
+    let root = tempfile::tempdir().expect("temporary fixture directory");
+    write_file(&root, "one.txt", "needle first\nordinary\nneedle second\n");
+    write_file(&root, "two.txt", "needle third\nneedle fourth\n");
+
+    jgrep()
+        .current_dir(root.path())
+        .args([
+            "--ai",
+            "--ai-max-results",
+            "3",
+            "-F",
+            "needle",
+            "one.txt",
+            "two.txt",
+        ])
+        .assert()
+        .success()
+        .stdout("one.txt:1\none.txt:3\ntwo.txt:1\n")
+        .stderr(predicate::str::contains(
+            "--ai stopped after 3 results; output may be incomplete",
+        ));
+}
+
+#[test]
+fn ai_limit_keeps_later_explicit_binary_inputs_as_errors() {
+    let root = tempfile::tempdir().expect("temporary fixture directory");
+    write_file(&root, "first.txt", "needle first\n");
+    write_file(&root, "binary.txt", b"needle\0not text\n");
+
+    jgrep()
+        .current_dir(root.path())
+        .args([
+            "--ai",
+            "--ai-max-results",
+            "1",
+            "-F",
+            "needle",
+            "first.txt",
+            "binary.txt",
+        ])
+        .assert()
+        .code(2)
+        .stdout("first.txt:1\n")
+        .stderr(
+            predicate::str::contains("binary input")
+                .and(predicate::str::contains("--ai stopped after 1 results")),
+        );
+
+    let mut late_binary = b"needle first\n".to_vec();
+    late_binary.extend(std::iter::repeat_n(b'x', 9_000));
+    late_binary.extend_from_slice(b"\0late binary marker\n");
+    write_file(&root, "late-binary.txt", late_binary);
+    jgrep()
+        .current_dir(root.path())
+        .args([
+            "--ai",
+            "--ai-max-results",
+            "1",
+            "-F",
+            "needle",
+            "late-binary.txt",
+        ])
+        .assert()
+        .code(2)
+        .stdout("late-binary.txt:1\n")
+        .stderr(predicate::str::contains("binary input"));
+}
+
+#[test]
+fn ai_mode_supports_lexical_filters_and_stdin_without_source_text() {
+    let root = tempfile::tempdir().expect("temporary fixture directory");
+    write_file(&root, "events.txt", "Needle details\nordinary line\n");
+
+    jgrep()
+        .current_dir(root.path())
+        .args(["--ai", "-i", "-F", "needle", "events.txt"])
+        .assert()
+        .success()
+        .stdout("events.txt:1\n")
+        .stderr(predicate::str::is_empty());
+
+    jgrep()
+        .current_dir(root.path())
+        .args(["--ai", "-E", "Needle|ordinary", "events.txt"])
+        .assert()
+        .success()
+        .stdout("events.txt:1\nevents.txt:2\n")
+        .stderr(predicate::str::is_empty());
+
+    jgrep()
+        .args(["--ai", "-F", "needle"])
+        .write_stdin("ordinary\nneedle content that must not be printed\n")
+        .assert()
+        .success()
+        .stdout("-:2\n")
+        .stderr(predicate::str::is_empty());
+
+    // The reserved stdin label must not collide with a normal file operand
+    // named `stdin`.
+    write_file(&root, "stdin", "needle from file\n");
+    jgrep()
+        .current_dir(root.path())
+        .args(["--ai", "-F", "needle", "stdin", "-"])
+        .write_stdin("needle from pipe\n")
+        .assert()
+        .success()
+        .stdout("stdin:1\n-:1\n")
+        .stderr(predicate::str::is_empty());
+
+    jgrep()
+        .current_dir(root.path())
+        .args(["--ai", "-v", "-i", "-F", "needle", "events.txt"])
+        .assert()
+        .success()
+        .stdout("events.txt:2\n")
+        .stderr(predicate::str::is_empty());
+
+    write_file(&root, "hyphen-context.txt", "-needle context\n");
+    jgrep()
+        .current_dir(root.path())
+        .args(["--ai", "-F", "-e", "-needle", "hyphen-context.txt"])
+        .assert()
+        .success()
+        .stdout("hyphen-context.txt:1\n")
+        .stderr(predicate::str::is_empty());
+}
+
+#[cfg(unix)]
+#[test]
+fn ai_mode_rejects_line_breaks_in_file_labels() {
+    let root = tempfile::tempdir().expect("temporary fixture directory");
+    let path = "line\nbreak.txt";
+    write_file(&root, path, "needle\n");
+
+    jgrep()
+        .current_dir(root.path())
+        .args(["--ai", "-F", "needle", path])
+        .assert()
+        .code(2)
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::contains(
+            "cannot emit a path containing a line break",
+        ));
 }
 
 #[test]

@@ -66,11 +66,20 @@ pub enum ColorMode {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum OutputMode {
     Lines,
+    /// Compact path-and-line locations intended as a first-pass result for a
+    /// coding agent. Records contain no source text, so a caller can fetch
+    /// only the small ranges it needs next.
+    AiRecords,
     Count,
     FilesWithMatches,
     FilesWithoutMatches,
     Quiet,
 }
+
+/// Default total location budget for `--ai`. This applies to the full
+/// invocation, including recursive and multi-file searches, rather than to
+/// each input as grep's `-m` does.
+pub const DEFAULT_AI_MAX_RESULTS: usize = 50;
 
 /// A normalized command that the streaming engine can execute.
 #[derive(Clone, Debug)]
@@ -92,6 +101,9 @@ pub struct SearchConfig {
     pub exclude: Vec<String>,
     pub color: ColorMode,
     pub line_buffered: bool,
+    /// A global location budget for compact agent output. `None` preserves
+    /// normal grep behavior without a cross-input result cap.
+    pub ai_max_results: Option<usize>,
     pub ignore_case: bool,
     pub semantic: SemanticOptions,
     /// Request model acquisition before a search. A command with no patterns
@@ -105,6 +117,7 @@ pub struct RunSummary {
     pub selected_any: bool,
     pub had_error: bool,
     pub output_broken: bool,
+    pub ai_limit_reached: bool,
 }
 
 impl RunSummary {
@@ -189,13 +202,26 @@ where
     }
 
     let mut matcher = Matcher::new(config, scorer_factory)?;
+    let mut ai_remaining = config.ai_max_results;
 
-    for source in &sources {
+    for (source_index, source) in sources.iter().enumerate() {
         if sink.broken_pipe {
             summary.output_broken = true;
             break;
         }
-        let result = process_source(config, source, show_filename, &mut matcher, &mut sink);
+        if ai_remaining == Some(0) {
+            summary.ai_limit_reached = true;
+            summary.had_error |= validate_sources_after_ai_limit(&sources[source_index..], stderr);
+            break;
+        }
+        let result = process_source(
+            config,
+            source,
+            show_filename,
+            &mut matcher,
+            &mut sink,
+            &mut ai_remaining,
+        );
         match result {
             Ok(source_result) => {
                 summary.selected_any |= source_result.selected_any;
@@ -203,6 +229,12 @@ where
                     // grep's quiet mode is successful when it finds a match,
                     // even if an earlier operand could not be read.
                     summary.had_error = false;
+                    break;
+                }
+                if ai_remaining == Some(0) {
+                    summary.ai_limit_reached = true;
+                    summary.had_error |=
+                        validate_sources_after_ai_limit(&sources[source_index..], stderr);
                     break;
                 }
             }
@@ -241,6 +273,19 @@ struct InputSource {
     path: Option<PathBuf>,
     label: String,
     recursive: bool,
+}
+
+impl InputSource {
+    fn ai_label(&self) -> &str {
+        if self.path.is_some() {
+            &self.label
+        } else {
+            // `-` is already the reserved command-line spelling for standard
+            // input. Keeping it in compact output makes the locator distinct
+            // from a real relative file named `stdin`.
+            "-"
+        }
+    }
 }
 
 fn collect_sources<E: Write>(
@@ -539,6 +584,7 @@ fn process_source<W, F>(
     show_filename: bool,
     matcher: &mut Matcher<F>,
     sink: &mut OutputSink<'_, W>,
+    ai_remaining: &mut Option<usize>,
 ) -> Result<SourceResult>
 where
     W: Write,
@@ -557,10 +603,26 @@ where
                 .with_context(|| format!("unable to rewind {}", source.label))?;
         }
         let reader = BufReader::new(file);
-        process_reader(config, source, show_filename, matcher, sink, reader)
+        process_reader(
+            config,
+            source,
+            show_filename,
+            matcher,
+            sink,
+            ai_remaining,
+            reader,
+        )
     } else {
         let stdin = io::stdin();
-        process_reader(config, source, show_filename, matcher, sink, stdin.lock())
+        process_reader(
+            config,
+            source,
+            show_filename,
+            matcher,
+            sink,
+            ai_remaining,
+            stdin.lock(),
+        )
     }
 }
 
@@ -571,6 +633,7 @@ fn process_reader<R, W, F>(
     show_filename: bool,
     matcher: &mut Matcher<F>,
     sink: &mut OutputSink<'_, W>,
+    ai_remaining: &mut Option<usize>,
     mut reader: R,
 ) -> Result<SourceResult>
 where
@@ -621,7 +684,7 @@ where
         }
         let line = std::str::from_utf8(&raw).map_err(|_| NonTextInputError::invalid_utf8())?;
 
-        let can_select = stop_after.is_none();
+        let can_select = stop_after.is_none() && ai_remaining.is_none_or(|remaining| remaining > 0);
         let result = if can_select {
             matcher.evaluate(line, config.invert_match)?
         } else {
@@ -664,6 +727,17 @@ where
                     )?;
                     after_until = after_until.max(line_number.saturating_add(config.after_context));
                 }
+                OutputMode::AiRecords => {
+                    sink.ai_record(source.ai_label(), line_number)?;
+                    // A closed downstream consumer is a normal grep case.
+                    // Do not consume the AI budget after EPIPE, or the caller
+                    // would receive a misleading "limit reached" diagnostic.
+                    if !sink.broken_pipe {
+                        if let Some(remaining) = ai_remaining {
+                            *remaining = remaining.saturating_sub(1);
+                        }
+                    }
+                }
                 OutputMode::Quiet => return Ok(SourceResult { selected_any: true }),
                 OutputMode::FilesWithMatches => {
                     sink.file_name(&source.label)?;
@@ -677,9 +751,12 @@ where
                 .is_some_and(|limit| selected_count >= limit)
             {
                 stop_after = Some(line_number.saturating_add(config.after_context));
-                if config.output_mode != OutputMode::Lines || config.after_context == 0 {
+                if !matches!(config.output_mode, OutputMode::Lines) || config.after_context == 0 {
                     break;
                 }
+            }
+            if *ai_remaining == Some(0) {
+                break;
             }
         } else if config.output_mode == OutputMode::Lines && line_number <= after_until {
             let record = LineRecord {
@@ -756,6 +833,47 @@ fn process_zero_source<W: Write>(
     // `-m 0` cannot select a line. `-L` may print a filename, but that does
     // not change grep's selected-line status.
     Ok(false)
+}
+
+/// After compact output reaches its budget, stop matching immediately but
+/// retain the explicit regular-file contract: a named binary or invalid UTF-8
+/// file is still an error. This deliberately does no model work and never
+/// consumes an unread stdin stream, which could be an open-ended producer.
+fn validate_sources_after_ai_limit<E: Write>(sources: &[InputSource], stderr: &mut E) -> bool {
+    let mut had_error = false;
+    for source in sources {
+        let Some(path) = &source.path else {
+            continue;
+        };
+        // Regular files can be safely reopened and preflighted without
+        // compromising a prompt result. Do not reopen named FIFOs, devices,
+        // or other streams here: a writer may intentionally remain open after
+        // the compact result limit is reached.
+        let metadata = match fs::metadata(path) {
+            Ok(metadata) => metadata,
+            Err(error) => {
+                had_error = true;
+                write_diagnostic(stderr, &source.label, &error.to_string());
+                continue;
+            }
+        };
+        if !metadata.is_file() {
+            continue;
+        }
+        let result = (|| -> Result<()> {
+            let mut file =
+                File::open(path).with_context(|| format!("unable to open {}", source.label))?;
+            preflight_text_file(&mut file, source)
+        })();
+        if let Err(error) = result {
+            let non_text = error.downcast_ref::<NonTextInputError>().is_some();
+            if !(source.recursive && non_text) {
+                had_error = true;
+            }
+            write_diagnostic(stderr, &source.label, &error.to_string());
+        }
+    }
+    had_error
 }
 
 /// Validate a file as text without retaining its contents. This is used as a
@@ -933,6 +1051,16 @@ impl<'a, W: Write> OutputSink<'a, W> {
             record.push_str(text);
         }
         self.write_record(&record)
+    }
+
+    fn ai_record(&mut self, label: &str, number: usize) -> Result<()> {
+        // Preserve ordinary paths verbatim, including Windows backslashes.
+        // A line break would make the one-record-per-line protocol ambiguous,
+        // so report it instead of emitting an unrecoverable location.
+        if label.contains(['\n', '\r']) {
+            bail!("--ai cannot emit a path containing a line break");
+        }
+        self.write_record(&format!("{label}:{number}"))
     }
 
     fn count(&mut self, label: &str, show_filename: bool, count: usize) -> Result<()> {

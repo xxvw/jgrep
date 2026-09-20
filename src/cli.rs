@@ -5,12 +5,15 @@
 //! patterns.  Splitting the operands after Clap has parsed the flags makes
 //! those forms unambiguous and keeps options usable before or after a pattern.
 
-use std::{ffi::OsString, path::PathBuf};
+use std::{ffi::OsString, num::NonZeroUsize, path::PathBuf};
 
 use anyhow::{Result, anyhow, bail};
 use clap::{ArgAction, ArgMatches, CommandFactory, FromArgMatches, Parser, ValueEnum};
 
-use crate::engine::{ColorMode, Device, OutputMode, SearchConfig, SearchMode, SemanticOptions};
+use crate::engine::{
+    ColorMode, DEFAULT_AI_MAX_RESULTS, Device, OutputMode, SearchConfig, SearchMode,
+    SemanticOptions,
+};
 
 /// The raw, user-facing command line.
 #[derive(Debug, Parser)]
@@ -32,7 +35,8 @@ pub struct Cli {
         short = 'e',
         long = "regexp",
         value_name = "CONTEXT",
-        action = ArgAction::Append
+        action = ArgAction::Append,
+        allow_hyphen_values = true
     )]
     patterns: Vec<String>,
 
@@ -150,6 +154,19 @@ pub struct Cli {
     #[arg(long = "line-buffered")]
     line_buffered: bool,
 
+    /// Print compact path:line locations for coding agents, without source text.
+    #[arg(long)]
+    ai: bool,
+
+    /// Maximum locations printed by --ai across the whole invocation (default: 50).
+    #[arg(
+        long,
+        value_name = "NUM",
+        requires = "ai",
+        value_parser = clap::value_parser!(NonZeroUsize)
+    )]
+    ai_max_results: Option<NonZeroUsize>,
+
     /// Ignore case in regular-expression and fixed-string modes.
     #[arg(short = 'i', long = "ignore-case")]
     ignore_case: bool,
@@ -262,6 +279,7 @@ impl Cli {
         };
 
         self.validate_mode(mode)?;
+        self.validate_ai()?;
 
         let mut patterns = self.patterns;
         let paths = if patterns.is_empty() {
@@ -290,7 +308,9 @@ impl Cli {
             bail!("--threshold must be a finite number from 0.0 through 1.0");
         }
 
-        let output_mode = if self.quiet {
+        let output_mode = if self.ai {
+            OutputMode::AiRecords
+        } else if self.quiet {
             OutputMode::Quiet
         } else if self.files_with_matches {
             OutputMode::FilesWithMatches
@@ -307,8 +327,8 @@ impl Cli {
             patterns,
             paths,
             invert_match: self.invert_match,
-            line_number: self.line_number,
-            with_filename: self.with_filename,
+            line_number: self.ai || self.line_number,
+            with_filename: self.ai || self.with_filename,
             no_filename: self.no_filename,
             output_mode,
             max_count: self.max_count,
@@ -317,15 +337,23 @@ impl Cli {
             after_context,
             include: self.include,
             exclude: self.exclude,
-            color: self.color.into(),
-            line_buffered: self.line_buffered,
+            color: if self.ai {
+                ColorMode::Never
+            } else {
+                self.color.into()
+            },
+            line_buffered: self.ai || self.line_buffered,
+            ai_max_results: self.ai.then(|| {
+                self.ai_max_results
+                    .map_or(DEFAULT_AI_MAX_RESULTS, NonZeroUsize::get)
+            }),
             ignore_case: self.ignore_case,
             semantic: SemanticOptions {
                 model_path: self.model,
                 offline: self.offline,
                 device: self.device.map_or(Device::Auto, Into::into),
                 threshold,
-                report_score: self.score,
+                report_score: !self.ai && self.score,
             },
             download_model: self.download_model,
         })
@@ -345,6 +373,40 @@ impl Cli {
             }
         } else if self.ignore_case {
             bail!("-i/--ignore-case is only available with -E or -F");
+        }
+
+        Ok(())
+    }
+
+    fn validate_ai(&self) -> Result<()> {
+        if !self.ai {
+            return Ok(());
+        }
+
+        if self.count || self.files_with_matches || self.files_without_match || self.quiet {
+            bail!(
+                "--ai cannot be combined with -c, -l, -L, or -q because it always prints locations"
+            );
+        }
+        if self.max_count.is_some() {
+            bail!("--ai cannot be combined with -m/--max-count; use --ai-max-results instead");
+        }
+        if self.no_filename {
+            bail!("--ai cannot be combined with -h/--no-filename because locations include paths");
+        }
+        if self.color == ColorArgument::Always {
+            bail!(
+                "--ai cannot be combined with --color=always because locations never use ANSI color"
+            );
+        }
+        if !self.before_context.is_empty()
+            || !self.after_context.is_empty()
+            || !self.context.is_empty()
+        {
+            bail!("--ai cannot be combined with -A, -B, or -C because it prints locations only");
+        }
+        if self.score {
+            bail!("--ai cannot be combined with --score because it prints locations only");
         }
 
         Ok(())
@@ -423,5 +485,55 @@ mod tests {
             parse_context(&["jgrep", "-F", "-A", "1", "-A", "3", "-B", "2", "needle"]),
             (2, 3)
         );
+    }
+
+    #[test]
+    fn ai_mode_normalizes_compact_output_and_limit() {
+        let config = parse_from(["jgrep", "--ai", "--ai-max-results", "7", "-F", "needle"])
+            .expect("CLI should parse")
+            .into_config()
+            .expect("CLI should normalize");
+
+        assert_eq!(config.mode, SearchMode::Fixed);
+        assert_eq!(config.output_mode, OutputMode::AiRecords);
+        assert_eq!(config.color, ColorMode::Never);
+        assert_eq!(config.ai_max_results, Some(7));
+        assert!(config.line_number);
+        assert!(config.with_filename);
+        assert!(config.line_buffered);
+
+        let default_config = parse_from(["jgrep", "--ai", "-F", "needle"])
+            .expect("CLI should parse")
+            .into_config()
+            .expect("CLI should normalize");
+        assert_eq!(default_config.ai_max_results, Some(DEFAULT_AI_MAX_RESULTS));
+    }
+
+    #[test]
+    fn ai_mode_rejects_output_shapes_that_hide_or_expand_locations() {
+        for arguments in [
+            ["jgrep", "--ai", "-c", "-F", "needle"].as_slice(),
+            ["jgrep", "--ai", "-h", "-F", "needle"].as_slice(),
+            ["jgrep", "--ai", "-C", "0", "-F", "needle"].as_slice(),
+            ["jgrep", "--ai", "-m", "1", "-F", "needle"].as_slice(),
+            ["jgrep", "--ai", "--color=always", "-F", "needle"].as_slice(),
+            ["jgrep", "--ai", "--score", "needle"].as_slice(),
+        ] {
+            let error = parse_from(arguments.iter().copied())
+                .expect("CLI should parse")
+                .into_config()
+                .expect_err("invalid AI output combination should be rejected");
+            assert!(error.to_string().contains("--ai"));
+        }
+    }
+
+    #[test]
+    fn ai_limit_requires_ai_and_a_positive_number() {
+        for arguments in [
+            ["jgrep", "--ai-max-results", "5", "-F", "needle"].as_slice(),
+            ["jgrep", "--ai", "--ai-max-results", "0", "-F", "needle"].as_slice(),
+        ] {
+            assert!(parse_from(arguments.iter().copied()).is_err());
+        }
     }
 }

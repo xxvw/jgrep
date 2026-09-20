@@ -164,7 +164,7 @@ jobs:
           }
 
           $contents = Join-Path $verifyDirectory $packageRoot
-          @("README.md", "LICENSE", "NOTICE", "LICENSES", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES.html", "SOURCE.txt") | ForEach-Object {
+          @("README.md", "LICENSE", "NOTICE", "LICENSES", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES.html", "SOURCE.txt", "AGENTS.md", "scripts/install.sh", "scripts/install.ps1", "scripts/validate-installers.sh", "templates/AGENTS.jgrep.md") | ForEach-Object {
             if (-not (Test-Path -LiteralPath (Join-Path $contents $_))) {
               throw "release archive is missing required content: $_"
             }
@@ -175,6 +175,37 @@ jobs:
           if ((@($match) -join "`n") -ne "release needle") {
             throw "packaged binary failed the stdin fixed-string smoke test"
           }
+
+          $ai = @("alpha", "release needle") | & $binary --ai -F "release needle"
+          if ((@($ai) -join "`n") -ne "-:2") {
+            throw "packaged binary failed the compact AI location smoke test"
+          }
+
+          # Exercise the installer distributed inside this just-built archive
+          # against the matching local asset directory. This is network-free
+          # and verifies the archive naming, checksum, safe extraction, and
+          # post-install executable on each native release runner.
+          $installDirectory = Join-Path $env:RUNNER_TEMP "jgrep-release-installer-verify"
+          if (Test-Path -LiteralPath $installDirectory) {
+            Remove-Item -LiteralPath $installDirectory -Recurse -Force
+          }
+          $assetDirectory = (Resolve-Path -LiteralPath "dist").Path
+          if ($env:ARCHIVE_FORMAT -eq "zip") {
+            $installer = Join-Path $contents "scripts/install.ps1"
+            & pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $installer `
+              -AssetDirectory $assetDirectory -Version "v$version" -Target $env:TARGET `
+              -InstallDir $installDirectory
+            if ($LASTEXITCODE -ne 0) { throw "packaged PowerShell installer failed" }
+            $installed = Join-Path $installDirectory "jgrep.exe"
+          } else {
+            $installer = Join-Path $contents "scripts/install.sh"
+            & bash $installer --asset-dir $assetDirectory --version "v$version" `
+              --target $env:TARGET --install-dir $installDirectory
+            if ($LASTEXITCODE -ne 0) { throw "packaged Bash installer failed" }
+            $installed = Join-Path $installDirectory "jgrep"
+          }
+          & $installed --version
+          if ($LASTEXITCODE -ne 0) { throw "installer did not produce a runnable jgrep" }
 
       - name: Upload checked release asset
         uses: actions/upload-artifact@v4
@@ -254,10 +285,10 @@ jobs:
           # positive first line and 0.048 for the unrelated negative second
           # line. It verifies both selections at 0.5 without presenting the
           # score as calibrated.
-          $result = @(& $binary --offline --device cpu --threshold 0.5 "network connection failure" $fixture)
-          $expected = "The network connection failure interrupted the upload."
+          $result = @(& $binary --ai --offline --device cpu --threshold 0.5 "network connection failure" $fixture)
+          $expected = "{0}:1" -f $fixture
           if ((@($result) -join "`n") -ne $expected) {
-            throw "semantic release gate did not select the positive fixture and reject the negative fixture"
+            throw "semantic AI release gate did not select the positive fixture and reject the negative fixture"
           }
 
   publish:

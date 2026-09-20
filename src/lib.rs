@@ -4,7 +4,7 @@ pub mod cli;
 pub mod engine;
 pub mod model;
 
-use std::io;
+use std::io::{self, Write};
 
 use anyhow::Result;
 
@@ -33,5 +33,14 @@ pub fn run_cli(cli: Cli) -> Result<u8> {
     let mut stdout = io::stdout();
     let mut stderr = io::stderr();
     let summary = run(&config, &mut stdout, &mut stderr, model::create_scorer)?;
+    if summary.ai_limit_reached {
+        let limit = config
+            .ai_max_results
+            .expect("AI limit is present when compact output reaches its cap");
+        writeln!(
+            stderr,
+            "jgrep: --ai stopped after {limit} results; output may be incomplete (increase --ai-max-results or narrow the search)"
+        )?;
+    }
     Ok(summary.exit_code())
 }

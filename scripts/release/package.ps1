@@ -87,6 +87,36 @@ if (Test-Path -LiteralPath $docs -PathType Container) {
     Copy-Item -LiteralPath $docs -Destination (Join-Path $stage "docs") -Recurse -Force
 }
 
+# Keep the verified installers and the reusable agent instructions with every
+# native archive, so an extracted release can be installed or integrated
+# without first finding a separate source checkout.
+Copy-RequiredFile -Source (Join-Path $repositoryRoot "AGENTS.md") -Destination $stage
+$stageScripts = Join-Path $stage "scripts"
+New-Item -ItemType Directory -Path $stageScripts | Out-Null
+@("install.sh", "install.ps1", "validate-installers.sh") | ForEach-Object {
+    Copy-RequiredFile -Source (Join-Path $repositoryRoot "scripts/$_") -Destination $stageScripts
+}
+$stageTemplates = Join-Path $stage "templates"
+New-Item -ItemType Directory -Path $stageTemplates | Out-Null
+Copy-RequiredFile -Source (Join-Path $repositoryRoot "templates/AGENTS.jgrep.md") -Destination $stageTemplates
+
+# Copy-Item's Unix mode preservation is not part of the archive contract.
+# Make the executable and Bash entry points executable explicitly in tarball
+# targets.
+if ($Format -eq "tar.gz") {
+    $executablePaths = @(
+        (Join-Path $stage (Split-Path -Leaf $binary)),
+        (Join-Path $stageScripts "install.sh"),
+        (Join-Path $stageScripts "validate-installers.sh")
+    )
+    foreach ($executablePath in $executablePaths) {
+        & chmod 755 $executablePath
+        if ($LASTEXITCODE -ne 0) {
+            throw "could not mark release file executable: $executablePath"
+        }
+    }
+}
+
 $sourceNotice = @(
     "localjev-grep source and build instructions"
     ""

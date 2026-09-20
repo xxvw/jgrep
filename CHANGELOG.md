@@ -21,3 +21,7 @@ released versions will use [Semantic Versioning](https://semver.org/).
   multilingual READMEs, and the initial multilingual semantic evaluation set.
 - A reproducible local result record for the versioned semantic fixture,
   including threshold-specific confusion matrices and measurement limits.
+- `--ai` compact `path:line` output for coding agents, with a global result
+  budget and guidance for fetching only the cited source ranges afterward.
+- Bash and PowerShell installers plus a portable `AGENTS.md` template for
+  integrating compact `jgrep` searches into coding-agent workflows.

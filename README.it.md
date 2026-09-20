@@ -100,6 +100,12 @@ sottostringa letterale; questi modi lessicali non scaricano né caricano il
 modello. `-E` e `-F` sono incompatibili e `-i` vale solo per essi. GNU
 BRE, PCRE e backreference non sono completamente compatibili.
 
+`--ai` è pensato per gli agenti di programmazione: restituisce soltanto
+posizioni compatte `percorso:riga`, senza testo sorgente corrispondente,
+colore ANSI, punteggio o contesto. Per impostazione predefinita limita l’intera
+invocazione a 50 posizioni; usare `--ai-max-results <n>` per modificare il
+limite. L’agente può quindi recuperare solo gli intervalli stretti necessari.
+
 | Opzione | Scopo |
 | --- | --- |
 | `-e <contesto>` | Aggiunge un contesto; basta una corrispondenza. |
@@ -108,6 +114,7 @@ BRE, PCRE e backreference non sono completamente compatibili.
 | `-v`, `-r`, `-A/-B/-C` | Inversione, ricerca ricorsiva e righe di contesto. |
 | `--include`, `--exclude`, `--color`, `--line-buffered` | Filtri di percorso, colore e flush per riga. |
 | `--threshold`, `--score` | Soglia semantica (predefinita `0.5`) e punteggio mostrato. |
+| `--ai`, `--ai-max-results <n>` | Output compatto per agenti e limite di posizioni. |
 | `--model`, `--download-model`, `--offline`, `--device auto\|cpu` | Modello, download, rete e dispositivo. |
 
 Usare `--` prima di un contesto o percorso che inizia con `-`. Le opzioni

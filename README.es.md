@@ -101,6 +101,12 @@ estos modos léxicos no descargan ni cargan el modelo. `-E` y `-F` son
 incompatibles y `-i` solo sirve en ellos. No se promete compatibilidad total
 con GNU BRE, PCRE ni retroreferencias.
 
+`--ai` está pensado para agentes de programación: devuelve solo ubicaciones
+compactas `ruta:línea`, sin texto fuente coincidente, color ANSI, puntuación
+ni contexto. De forma predeterminada limita toda la invocación a 50
+ubicaciones; use `--ai-max-results <n>` para cambiar ese límite. Después, el
+agente puede obtener únicamente los rangos estrechos que necesite.
+
 | Opción | Uso |
 | --- | --- |
 | `-e <contexto>` | Añade un contexto; basta cualquier coincidencia. |
@@ -109,6 +115,7 @@ con GNU BRE, PCRE ni retroreferencias.
 | `-v`, `-r`, `-A/-B/-C` | Inversión, búsqueda recursiva y líneas de contexto. |
 | `--include`, `--exclude`, `--color`, `--line-buffered` | Filtros de ruta, color y vaciado por línea. |
 | `--threshold`, `--score` | Umbral semántico (predeterminado `0.5`) y valor mostrado. |
+| `--ai`, `--ai-max-results <n>` | Salida compacta para agentes y límite de ubicaciones. |
 | `--model`, `--download-model`, `--offline`, `--device auto\|cpu` | Modelo, descarga, red y dispositivo. |
 
 Use `--` antes de un contexto o una ruta que comienza con `-`. Las opciones

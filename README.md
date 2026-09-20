@@ -60,6 +60,8 @@ guides and may lag behind it.
 Download the archive for macOS on Apple Silicon or Intel, Windows x64, or Linux
 x64 (glibc 2.35 or later) from
 [GitHub Releases](https://github.com/xxvw/localjev-grep/releases).
+For verified Bash and PowerShell installers, offline asset installation, and
+coding-agent setup, see [installation and agent integration](docs/installation-and-agents.md).
 To build from source:
 
 ```sh
@@ -148,6 +150,8 @@ lexical modes, so a typo cannot silently change how a query is interpreted.
 | `--exclude <GLOB>` | Skip matching recursive paths. |
 | `--color <auto|always|never>` | Control ANSI highlighting. `auto` disables it when stdout is a pipe. |
 | `--line-buffered` | Flush each output line for streaming pipelines. |
+| `--ai` | Emit compact `path:line` locations for coding agents, without source text. |
+| `--ai-max-results <NUM>` | Set the positive, whole-invocation location limit for `--ai`; default `50`. |
 | `--threshold <0..1>` | Semantic relevance cutoff; default `0.5`. |
 | `--score` | Add the semantic relevance score to selected output. |
 | `--model <PATH>` | Use an explicit local GGUF model file. |
@@ -156,6 +160,45 @@ lexical modes, so a typo cannot silently change how a query is interpreted.
 | `--device <auto|cpu>` | Select the local inference device. |
 
 Use `--` before a pattern or path that begins with `-`.
+
+### AI-agent output
+
+`--ai` is a token-efficient first pass for coding agents and tool calls. It
+keeps the normal matcher and exit codes, but emits one UTF-8 record per
+selected line in this form:
+
+```text
+path/to/file.rs:42
+-:7
+```
+
+Records contain neither source text nor ANSI color, semantic scores, or
+context lines. The default is at most **50 locations across the entire
+invocation**, including recursive and multi-file searches. Increase it only
+when needed with `--ai-max-results <NUM>`; it accepts positive integers. When
+the limit is reached, stderr says that the output may be incomplete. Split a
+record at the final colon before its decimal line number so Windows drive
+prefixes remain valid. `-:LINE` identifies a reproducible pipeline rather
+than retaining its input for a later read. To preserve one-record-per-line
+output, `--ai` rejects a file path containing CR or LF.
+
+Use it to locate candidates, then read only narrow ranges around the returned
+locations. For example:
+
+```sh
+jgrep --ai -r --include '*.rs' -F 'resolve_config' src/
+# Then inspect only the cited source range:
+sed -n '38,48p' src/config.rs
+```
+
+`--ai` supports semantic, `-E`, and `-F` matching; lexical `-i`, `-v`,
+`-r`, `--include`, and `--exclude` remain available. It rejects `-c`, `-l`,
+`-L`, `-q`, `-m`, `-h`, `-A`, `-B`, `-C`, and `--score`, because those flags
+would hide, expand, or change the compact location protocol. `-H`, `-n`, and
+`--line-buffered` are accepted but redundant. `--color=always` is rejected;
+agent output never contains ANSI escapes. See
+[installation and agent integration](docs/installation-and-agents.md) for
+installer and template usage.
 
 ## Model, privacy, and scores
 

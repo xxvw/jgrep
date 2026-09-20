@@ -447,6 +447,7 @@ const READMES: &[&str] = &[
 ];
 
 const REQUIRED_DOCUMENTS: &[&str] = &[
+    "AGENTS.md",
     "CHANGELOG.md",
     "CODE_OF_CONDUCT.md",
     "CONTRIBUTING.md",
@@ -459,6 +460,7 @@ const REQUIRED_DOCUMENTS: &[&str] = &[
     "THIRD_PARTY_NOTICES.md",
     "docs/README.md",
     "docs/evaluation.md",
+    "docs/installation-and-agents.md",
     "docs/model.md",
     "docs/portability.md",
     "docs/semantic-search.md",
@@ -467,6 +469,10 @@ const REQUIRED_DOCUMENTS: &[&str] = &[
     "eval/RESULTS-v0.1.0.md",
     "eval/semantic-v1.jsonl",
     "eval/semantic-v1.schema.json",
+    "scripts/install.ps1",
+    "scripts/install.sh",
+    "scripts/validate-installers.sh",
+    "templates/AGENTS.jgrep.md",
 ];
 
 const MODEL_REVISION: &str = "6dd44a1fb35d11b5d1b28902876ce3cc9e882d0e";
@@ -481,6 +487,8 @@ fn check_docs() -> Result<(), String> {
         for required in [
             "Bash",
             "PowerShell",
+            "--ai",
+            "--ai-max-results",
             "--download-model",
             "--offline",
             "GPL-3.0-or-later",
@@ -514,6 +522,50 @@ fn check_docs() -> Result<(), String> {
     require_contains("CHANGELOG.md", &changelog, "## [0.1.0]")?;
     let results = read_text("eval/RESULTS-v0.1.0.md")?;
     require_contains("eval/RESULTS-v0.1.0.md", &results, "localjev-grep v0.1.0")?;
+
+    let installer_guide = read_text("docs/installation-and-agents.md")?;
+    for required in [
+        "scripts/install.sh",
+        "install.ps1",
+        "templates/AGENTS.jgrep.md",
+        "--ai-max-results",
+        "-:LINE",
+    ] {
+        require_contains(
+            "docs/installation-and-agents.md",
+            &installer_guide,
+            required,
+        )?;
+    }
+    let agent_template = read_text("templates/AGENTS.jgrep.md")?;
+    for required in [
+        "jgrep --ai",
+        "decimal line number",
+        "--ai-max-results",
+        "--color=always",
+        "-:LINE",
+    ] {
+        require_contains("templates/AGENTS.jgrep.md", &agent_template, required)?;
+    }
+    let bash_installer = read_text("scripts/install.sh")?;
+    for required in [
+        "--asset-dir",
+        "SHA-256 verification failed",
+        "version mismatch",
+    ] {
+        require_contains("scripts/install.sh", &bash_installer, required)?;
+    }
+    let powershell_installer = read_text("scripts/install.ps1")?;
+    for required in [
+        "-AssetDirectory",
+        "Get-FileHash",
+        "Copy-ZipEntryToFile",
+        "version mismatch",
+        "returned tag",
+        "reparse point",
+    ] {
+        require_contains("scripts/install.ps1", &powershell_installer, required)?;
+    }
 
     let mit = read_text("LICENSES/MIT.txt")?;
     if mit.contains("<year>") || mit.contains("<copyright holders>") {

@@ -74,6 +74,13 @@ Get-Content .\service.log | .\jgrep.exe '数据库登录被拒绝'
 .\jgrep.exe -E -i 'error|warning' .\app.log
 ```
 
+## 面向 AI 代理的紧凑输出
+
+`--ai` 面向编程代理的工具调用，只输出 `path:line` 形式的匹配位置。它不会输出匹配的
+源文本、ANSI 颜色、分数或前后文。默认情况下，整个调用最多返回 50 个位置；可用
+`--ai-max-results <NUM>` 调整上限。代理拿到位置后，可以用单独的读取操作仅获取所需的
+窄行范围。
+
 ## 常用选项
 
 | 选项 | 作用 |
@@ -86,6 +93,7 @@ Get-Content .\service.log | .\jgrep.exe '数据库登录被拒绝'
 | `-r`、`-A` / `-B` / `-C` | 递归搜索，以及显示后方 / 前方 / 周围的上下文行。 |
 | `--include <GLOB>` / `--exclude <GLOB>` | 限制或跳过递归搜索的路径。 |
 | `--color <auto|always|never>`、`--line-buffered` | 控制 ANSI 高亮；为流式管道逐行刷新输出。 |
+| `--ai`、`--ai-max-results <NUM>` | 为代理输出 `path:line` 位置，并设置整个调用的最大结果数（默认 50）。 |
 | `--threshold <0..1>`、`--score` | 设置语义相关性阈值（默认 `0.5`）；在输出中显示语义分数。 |
 | `--model <PATH>`、`--download-model`、`--offline`、`--device <auto|cpu>` | 指定本地 GGUF 模型、下载默认模型、禁止网络访问、选择本地推理设备。 |
 

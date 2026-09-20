@@ -102,6 +102,12 @@ Zeichenketten; beide Modi laden kein Modell herunter und laden es nicht. `-E`
 und `-F` schließen sich aus, `-i` gilt nur für diese lexikalischen Modi.
 GNU-BRE, PCRE und Rückreferenzen werden nicht vollständig unterstützt.
 
+`--ai` ist für Programmieragenten gedacht: Es gibt nur kompakte Positionen
+im Format `pfad:zeile` aus, ohne passenden Quelltext, ANSI-Farbe, Score oder
+Kontext. Standardmäßig begrenzt es den gesamten Aufruf auf 50 Positionen;
+mit `--ai-max-results <n>` lässt sich dieses Limit anpassen. Anschließend
+kann der Agent nur die benötigten engen Bereiche abrufen.
+
 | Option | Zweck |
 | --- | --- |
 | `-e <Kontext>` | Kontext hinzufügen; jede passende Bedingung genügt. |
@@ -110,6 +116,7 @@ GNU-BRE, PCRE und Rückreferenzen werden nicht vollständig unterstützt.
 | `-v`, `-r`, `-A/-B/-C` | Auswahl umkehren, rekursiv suchen, Kontextzeilen ausgeben. |
 | `--include`, `--exclude`, `--color`, `--line-buffered` | Pfadfilter, Farbe und zeilenweises Flushen. |
 | `--threshold`, `--score` | Semantischer Schwellenwert (standardmäßig `0.5`) und Score-Ausgabe. |
+| `--ai`, `--ai-max-results <n>` | Kompakte Agent-Ausgabe und Positionslimit. |
 | `--model`, `--download-model`, `--offline`, `--device auto\|cpu` | Modell- und Geräteverwaltung. |
 
 `--` trennt einen Kontext oder Pfad, der mit `-` beginnt. Semantik-spezifische

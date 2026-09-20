@@ -101,6 +101,12 @@ littérale ; ces modes lexicaux ne téléchargent ni ne chargent le modèle.
 `-E` et `-F` sont incompatibles, et `-i` est réservé aux modes lexicaux.
 GNU BRE, PCRE et les références arrière ne sont pas entièrement compatibles.
 
+`--ai` est conçu pour les agents de programmation : il ne renvoie que des
+emplacements compacts `chemin:ligne`, sans texte source correspondant,
+couleur ANSI, score ni contexte. Il limite par défaut l’invocation entière à
+50 emplacements ; utilisez `--ai-max-results <n>` pour modifier cette limite.
+L’agent peut ensuite demander uniquement les plages étroites dont il a besoin.
+
 | Option | Rôle |
 | --- | --- |
 | `-e <contexte>` | Ajoute un contexte ; n’importe quelle correspondance suffit. |
@@ -109,6 +115,7 @@ GNU BRE, PCRE et les références arrière ne sont pas entièrement compatibles.
 | `-v`, `-r`, `-A/-B/-C` | Inversion, parcours récursif et lignes de contexte. |
 | `--include`, `--exclude`, `--color`, `--line-buffered` | Filtres de chemin, couleur et flush par ligne. |
 | `--threshold`, `--score` | Seuil sémantique (par défaut `0.5`) et score affiché. |
+| `--ai`, `--ai-max-results <n>` | Sortie compacte pour agent et limite d’emplacements. |
 | `--model`, `--download-model`, `--offline`, `--device auto\|cpu` | Modèle, téléchargement, réseau et appareil. |
 
 Utilisez `--` avant un contexte ou un chemin qui commence par `-`. Les

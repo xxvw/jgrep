@@ -74,6 +74,13 @@ Get-Content .\service.log | .\jgrep.exe --offline 'connection was reset'
 
 `--download-model`에 문맥을 함께 주면 검색 전에 캐시를 준비합니다. 문맥 없이 쓰면 다운로드 후 종료합니다. `--offline`은 네트워크를 절대 사용하지 않으며, 유효한 로컬 모델이 없으면 실패합니다. 두 옵션은 함께 쓸 수 없습니다. `--model /path/to/model.gguf`로 기존 GGUF 파일을 지정할 수 있습니다.
 
+## AI 에이전트용 압축 출력
+
+`--ai`는 코딩 에이전트의 도구 호출을 위해 일치 위치만 `path:line` 형식으로 출력합니다.
+일치한 원문 줄, ANSI 색상, 점수, 주변 문맥은 출력하지 않습니다. 기본값은 한 번의 호출
+전체에서 최대 50개 위치이며, `--ai-max-results <NUM>`로 이 상한을 바꿀 수 있습니다.
+에이전트는 위치를 받은 뒤 별도 읽기 작업으로 필요한 좁은 줄 범위만 가져올 수 있습니다.
+
 ## 주요 옵션
 
 | 옵션 | 설명 |
@@ -85,6 +92,7 @@ Get-Content .\service.log | .\jgrep.exe --offline 'connection was reset'
 | `-r`, `--include <GLOB>`, `--exclude <GLOB>` | 결정적인 경로 순서로 재귀 검색하고 대상 경로를 제한합니다. |
 | `-A`, `-B`, `-C` | 뒤쪽, 앞쪽 또는 주변 문맥 줄을 함께 출력합니다. |
 | `--color <auto|always|never>`, `--line-buffered` | ANSI 색상과 스트리밍 파이프의 줄 단위 flush를 제어합니다. |
+| `--ai`, `--ai-max-results <NUM>` | 에이전트용 `path:line` 위치 출력과 호출 전체의 최대 결과 수(기본 50)를 제어합니다. |
 | `--threshold <0..1>`, `--score` | 의미 검색의 관련성 기준값(기본값 `0.5`)과 선택된 줄의 점수를 제어합니다. |
 | `--model <PATH>`, `--download-model`, `--offline`, `--device <auto|cpu>` | 로컬 모델 파일, 캐시 준비, 네트워크 차단, 추론 장치를 제어합니다. |
 

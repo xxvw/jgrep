@@ -12,6 +12,8 @@
   reference measurements and their limits.
 - [Portability](portability.md) — supported platforms and source-build
   requirements.
+- [Installation and agent integration](installation-and-agents.md) — verified
+  Bash/PowerShell installers and the compact `--ai` workflow for coding agents.
 - [Translations](translations.md) — localized README index and maintenance
   guidance.
 
