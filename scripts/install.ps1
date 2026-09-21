@@ -177,7 +177,7 @@ function Get-NativeFileAttributes {
         )) {
         $errorCode = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
         $message = (New-Object System.ComponentModel.Win32Exception($errorCode)).Message
-        Fail "could not inspect $Description without following reparse points: $Path (Win32 error $errorCode: $message)"
+        Fail "could not inspect $Description without following reparse points: $Path (Win32 error ${errorCode}: $message)"
     }
     return [uint32]$information.FileAttributes
 }
@@ -214,7 +214,7 @@ function Open-ReparseSafePath {
         $errorCode = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
         $message = (New-Object System.ComponentModel.Win32Exception($errorCode)).Message
         $handle.Dispose()
-        Fail "could not open $Description without following reparse points: $Path (Win32 error $errorCode: $message)"
+        Fail "could not open $Description without following reparse points: $Path (Win32 error ${errorCode}: $message)"
     }
 
     try {
