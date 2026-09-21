@@ -511,6 +511,17 @@ fn check_docs() -> Result<(), String> {
         }
     }
 
+    for readme in READMES
+        .iter()
+        .copied()
+        .filter(|readme| *readme != "README.md")
+    {
+        let contents = read_text(readme)?;
+        for required in ["JGREP_REPOSITORY=xxvw/jgrep", "-Repository 'xxvw/jgrep'"] {
+            require_contains(readme, &contents, required)?;
+        }
+    }
+
     for document in REQUIRED_DOCUMENTS {
         if !Path::new(document).is_file() {
             return Err(format!(
@@ -552,6 +563,8 @@ fn check_docs() -> Result<(), String> {
         "templates/AGENTS.jgrep.md",
         "--ai-max-results",
         "-:LINE",
+        "JGREP_REPOSITORY=xxvw/jgrep",
+        "-Repository 'xxvw/jgrep'",
     ] {
         require_contains(
             "docs/installation-and-agents.md",

@@ -49,7 +49,8 @@ Copie y pegue este único comando compuesto en Bash o zsh:
     sha256sum -c "$archive.sha256"
   fi)
   tar -xzf "$workdir/$archive" -C "$workdir"
-  bash "$workdir/localjev-grep-installers-${version}/installers/es/install.sh" \
+  JGREP_REPOSITORY=xxvw/jgrep \
+    bash "$workdir/localjev-grep-installers-${version}/installers/es/install.sh" \
     --version "$version"
 )
 ```
@@ -76,7 +77,7 @@ Copie y pegue este único bloque de PowerShell:
     $actual = (Get-FileHash -LiteralPath (Join-Path $workdir $archive) -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actual -ne $expected) { throw 'installer bundle checksum mismatch' }
     Expand-Archive -LiteralPath (Join-Path $workdir $archive) -DestinationPath $workdir -Force
-    & (Join-Path $workdir "localjev-grep-installers-$version\installers\es\install.ps1") -Version $version
+    & (Join-Path $workdir "localjev-grep-installers-$version\installers\es\install.ps1") -Version $version -Repository 'xxvw/jgrep'
   } finally {
     Remove-Item -LiteralPath $workdir -Recurse -Force -ErrorAction SilentlyContinue
   }

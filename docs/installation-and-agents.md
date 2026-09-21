@@ -14,6 +14,12 @@ publisher-identity proof. The commands below download a version-pinned
 installer bundle, verify it before extraction, then run a local file. They do
 not use `git clone`, `curl | sh`, or `Invoke-Expression`.
 
+The immutable `v0.1.1` bundle predates the repository rename and embeds
+`xxvw/localjev-grep` as its default repository. The commands below explicitly
+override that historical default with `xxvw/jgrep` for both Bash and
+PowerShell. The bundle and archive filenames remain unchanged because they are
+published release assets.
+
 ## One-paste, no-clone installation
 
 The bundle has the common installer and a localized wrapper for each supported
@@ -44,7 +50,8 @@ Paste this single compound command into Bash or zsh:
     sha256sum -c "$archive.sha256"
   fi)
   tar -xzf "$workdir/$archive" -C "$workdir"
-  bash "$workdir/localjev-grep-installers-${version}/installers/en/install.sh" \
+  JGREP_REPOSITORY=xxvw/jgrep \
+    bash "$workdir/localjev-grep-installers-${version}/installers/en/install.sh" \
     --version "$version"
 )
 ```
@@ -71,7 +78,7 @@ Paste this single PowerShell command block:
     $actual = (Get-FileHash -LiteralPath (Join-Path $workdir $archive) -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actual -ne $expected) { throw 'installer bundle checksum mismatch' }
     Expand-Archive -LiteralPath (Join-Path $workdir $archive) -DestinationPath $workdir -Force
-    & (Join-Path $workdir "localjev-grep-installers-$version\installers\en\install.ps1") -Version $version
+    & (Join-Path $workdir "localjev-grep-installers-$version\installers\en\install.ps1") -Version $version -Repository 'xxvw/jgrep'
   } finally {
     Remove-Item -LiteralPath $workdir -Recurse -Force -ErrorAction SilentlyContinue
   }

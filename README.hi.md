@@ -36,7 +36,8 @@ Bash या zsh में यह एक संयुक्त कमांड �
     sha256sum -c "$archive.sha256"
   fi)
   tar -xzf "$workdir/$archive" -C "$workdir"
-  bash "$workdir/localjev-grep-installers-${version}/installers/hi/install.sh" \
+  JGREP_REPOSITORY=xxvw/jgrep \
+    bash "$workdir/localjev-grep-installers-${version}/installers/hi/install.sh" \
     --version "$version"
 )
 ```
@@ -63,7 +64,7 @@ PowerShell में यह एक कमांड ब्लॉक पेस्�
     $actual = (Get-FileHash -LiteralPath (Join-Path $workdir $archive) -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actual -ne $expected) { throw 'installer bundle checksum mismatch' }
     Expand-Archive -LiteralPath (Join-Path $workdir $archive) -DestinationPath $workdir -Force
-    & (Join-Path $workdir "localjev-grep-installers-$version\installers\hi\install.ps1") -Version $version
+    & (Join-Path $workdir "localjev-grep-installers-$version\installers\hi\install.ps1") -Version $version -Repository 'xxvw/jgrep'
   } finally {
     Remove-Item -LiteralPath $workdir -Recurse -Force -ErrorAction SilentlyContinue
   }

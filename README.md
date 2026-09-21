@@ -98,7 +98,9 @@ coding-agent setup.
 
 The `v0.1.1` release predates the repository rename, so its immutable archive
 and installer directory names still begin with `localjev-grep`. Repository
-URLs, source builds, and the installed command use `jgrep`.
+URLs, source builds, and the installed command use `jgrep`. Its bundled
+installers also contain the historical default repository, so the documented
+Bash and PowerShell commands explicitly override that default with `xxvw/jgrep`.
 
 To build from source:
 
