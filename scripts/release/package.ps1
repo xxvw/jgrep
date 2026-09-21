@@ -42,6 +42,35 @@ function Copy-RequiredFile {
     Copy-Item -LiteralPath $Source -Destination $Destination -Force
 }
 
+function Copy-RequiredDirectory {
+    param(
+        [Parameter(Mandatory)][string]$Source,
+        [Parameter(Mandatory)][string]$Destination
+    )
+
+    if (-not (Test-Path -LiteralPath $Source -PathType Container)) {
+        throw "required release directory is missing: $Source"
+    }
+    Copy-Item -LiteralPath $Source -Destination $Destination -Recurse -Force
+}
+
+function New-ZipArchive {
+    param(
+        [Parameter(Mandatory)][string]$Source,
+        [Parameter(Mandatory)][string]$Destination
+    )
+
+    # Compress-Archive can omit hidden paths such as .agents. ZipFile keeps
+    # the complete release contract, including the marketplace definition.
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::CreateFromDirectory(
+        $Source,
+        $Destination,
+        [System.IO.Compression.CompressionLevel]::Optimal,
+        $true
+    )
+}
+
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 $binary = (Resolve-Path -LiteralPath $BinaryPath).Path
 if (-not (Test-Path -LiteralPath $binary -PathType Leaf)) {
@@ -86,6 +115,7 @@ $docs = Join-Path $repositoryRoot "docs"
 if (Test-Path -LiteralPath $docs -PathType Container) {
     Copy-Item -LiteralPath $docs -Destination (Join-Path $stage "docs") -Recurse -Force
 }
+Copy-RequiredDirectory -Source (Join-Path $repositoryRoot "eval") -Destination (Join-Path $stage "eval")
 
 # Keep the verified installers and the reusable agent instructions with every
 # native archive, so an extracted release can be installed or integrated
@@ -93,12 +123,15 @@ if (Test-Path -LiteralPath $docs -PathType Container) {
 Copy-RequiredFile -Source (Join-Path $repositoryRoot "AGENTS.md") -Destination $stage
 $stageScripts = Join-Path $stage "scripts"
 New-Item -ItemType Directory -Path $stageScripts | Out-Null
-@("install.sh", "install.ps1", "validate-installers.sh") | ForEach-Object {
+@("install.sh", "install.ps1", "validate-installers.sh", "generate-localized-installers.py") | ForEach-Object {
     Copy-RequiredFile -Source (Join-Path $repositoryRoot "scripts/$_") -Destination $stageScripts
 }
 $stageTemplates = Join-Path $stage "templates"
 New-Item -ItemType Directory -Path $stageTemplates | Out-Null
 Copy-RequiredFile -Source (Join-Path $repositoryRoot "templates/AGENTS.jgrep.md") -Destination $stageTemplates
+Copy-RequiredDirectory -Source (Join-Path $repositoryRoot "installers") -Destination (Join-Path $stage "installers")
+Copy-RequiredDirectory -Source (Join-Path $repositoryRoot "plugins") -Destination (Join-Path $stage "plugins")
+Copy-RequiredDirectory -Source (Join-Path $repositoryRoot ".agents") -Destination (Join-Path $stage ".agents")
 
 # Copy-Item's Unix mode preservation is not part of the archive contract.
 # Make the executable and Bash entry points executable explicitly in tarball
@@ -108,7 +141,7 @@ if ($Format -eq "tar.gz") {
         (Join-Path $stage (Split-Path -Leaf $binary)),
         (Join-Path $stageScripts "install.sh"),
         (Join-Path $stageScripts "validate-installers.sh")
-    )
+    ) + @(Get-ChildItem -LiteralPath (Join-Path $stage "installers") -Recurse -Filter "*.sh" | ForEach-Object { $_.FullName })
     foreach ($executablePath in $executablePaths) {
         & chmod 755 $executablePath
         if ($LASTEXITCODE -ne 0) {
@@ -135,7 +168,7 @@ if (Test-Path -LiteralPath $archive) {
 }
 
 if ($Format -eq "zip") {
-    Compress-Archive -LiteralPath $stage -DestinationPath $archive -Force
+    New-ZipArchive -Source $stage -Destination $archive
 } else {
     & tar -czf $archive -C $out $packageRoot
     if ($LASTEXITCODE -ne 0) {

@@ -60,8 +60,14 @@ guides and may lag behind it.
 Download the archive for macOS on Apple Silicon or Intel, Windows x64, or Linux
 x64 (glibc 2.35 or later) from
 [GitHub Releases](https://github.com/xxvw/localjev-grep/releases).
-For verified Bash and PowerShell installers, offline asset installation, and
-coding-agent setup, see [installation and agent integration](docs/installation-and-agents.md).
+
+For a clone-free, version-pinned installation, copy the verified Bash/zsh or
+PowerShell command in [installation and agent integration](docs/installation-and-agents.md).
+It downloads the `v0.1.1` installer bundle, checks its SHA-256 file before
+extracting it, and then runs a local installer. The guide also has one-paste
+commands for every supported README language, offline asset installation, and
+coding-agent setup.
+
 To build from source:
 
 ```sh
@@ -172,6 +178,10 @@ path/to/file.rs:42
 -:7
 ```
 
+Codex users can install the ready-made
+[`jgrep-agent` plugin](plugins/jgrep-agent/README.md), including its localized
+agent guides.
+
 Records contain neither source text nor ANSI color, semantic scores, or
 context lines. The default is at most **50 locations across the entire
 invocation**, including recursive and multi-file searches. Increase it only
@@ -224,8 +234,8 @@ to guarantee that an invocation makes no network request. `--help`, lexical
 searches, empty input, and `-m 0` do not initialize the model.
 
 `--offline` and `--download-model` conflict. To inspect a score in ordinary
-line output, use `--score`; selected records receive a prefix such as
-`score=0.743 ` before the original line.
+line output, use `--score`; selected records receive a `score=0.743` prefix,
+followed by a space and the original line.
 
 The semantic score is computed from the difference between the model's `Yes`
 and `No` next-token logits:

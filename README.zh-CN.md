@@ -2,7 +2,7 @@
 
 `jgrep` 是一个本地运行的、用于语义搜索的 grep 风格命令。它根据自然语言上下文筛选输入行，同时保留 `grep` 熟悉的文件与管道工作方式。
 
-> **v0.1.0：** 可从 [GitHub Releases](https://github.com/xxvw/localjev-grep/releases) 下载带版本号的原生归档包。本项目不对基准测试结果、准确率、吞吐量或延迟作出保证。
+> **v0.1.1：** 可从 [GitHub Releases](https://github.com/xxvw/localjev-grep/releases) 下载带版本号的原生归档包。本项目不对基准测试结果、准确率、吞吐量或延迟作出保证。
 
 默认的语义模式使用本地的 [Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct) 模型，对每一行是否与上下文相关作二元判断。搜索内容不会发送给托管模型；不需要 Python、Ollama 或常驻服务。`-E` 为 Rust 正则表达式模式，`-F` 为固定字符串模式，两者均不会下载或加载模型。
 
@@ -10,9 +10,76 @@
 
 ## 安装
 
-从 [GitHub Releases](https://github.com/xxvw/localjev-grep/releases) 下载适用于 macOS（Apple Silicon 或 Intel）、Windows x64 或 Linux x64（glibc 2.35 及更高版本）的归档包，解压后将其中的可执行文件加入 `PATH`。
+无需 `git clone`：将下面其中一个命令块完整粘贴并执行一次即可。它会下载固定版本的
+安装程序包、在解压前验证 SHA-256，然后在本地运行简体中文包装脚本。支持 macOS
+（Apple Silicon 或 Intel）、Windows x64 和 Linux x64（glibc 2.35 及更高版本）。
+从同一发布页下载的校验和可发现传输损坏和错误的资源匹配，但不是签名形式的发布者身份
+证明。
+简体中文包装脚本只显示本地化的启动信息，并将处理及所有安全检查委派给共享的、已验证的
+核心安装程序。
 
-也可以从源码构建：
+在 Bash / zsh 中完整粘贴一次：
+
+```sh
+(
+  set -e
+  version=v0.1.1
+  archive="localjev-grep-installers-${version}.tar.gz"
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "$workdir"' EXIT
+  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive.sha256" "$base/$archive.sha256"
+  (cd "$workdir" && if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 -c "$archive.sha256"
+  else
+    sha256sum -c "$archive.sha256"
+  fi)
+  tar -xzf "$workdir/$archive" -C "$workdir"
+  bash "$workdir/localjev-grep-installers-${version}/installers/zh-CN/install.sh" \
+    --version "$version"
+)
+```
+
+在 Windows PowerShell 中完整粘贴一次：
+
+```powershell
+& {
+  $ErrorActionPreference = 'Stop'
+  $version = 'v0.1.1'
+  $archive = "localjev-grep-installers-$version.zip"
+  $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
+  New-Item -ItemType Directory -Path $workdir | Out-Null
+  try {
+    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
+    $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
+    $manifestPattern = '^[A-Fa-f0-9]{64}  ' + [regex]::Escape($archive) + '$'
+    if ($manifest -notmatch $manifestPattern) { throw 'installer bundle checksum manifest is invalid' }
+    $expected = $manifest.Substring(0, 64).ToLowerInvariant()
+    $actual = (Get-FileHash -LiteralPath (Join-Path $workdir $archive) -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actual -ne $expected) { throw 'installer bundle checksum mismatch' }
+    Expand-Archive -LiteralPath (Join-Path $workdir $archive) -DestinationPath $workdir -Force
+    & (Join-Path $workdir "localjev-grep-installers-$version\installers\zh-CN\install.ps1") -Version $version
+  } finally {
+    Remove-Item -LiteralPath $workdir -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+```
+
+此流程不使用 `curl | sh` 或 `Invoke-Expression`。安装目录等选项及离线资源用法请参阅
+[安装与编程代理集成指南](docs/installation-and-agents.md)。编程代理设置请查看
+[简体中文 `jgrep-agent` 插件指南](plugins/jgrep-agent/README.zh-CN.md)。
+在 Unix 上，默认安装目录为 `$HOME/.local/bin`。在 PowerShell 中，可将最后的
+`-Version $version` 改为 `-Version $version -AddToPath`，以将所选安装目录加入用户的
+`PATH`。
+
+### 从源码构建（可选）
+
+对于不受支持的架构或 glibc 低于 2.35 的 Linux，可选择从源码构建。
 
 ```sh
 git clone https://github.com/xxvw/localjev-grep.git

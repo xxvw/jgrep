@@ -16,7 +16,11 @@ use std::ffi::OsString;
 
 use sha2::{Digest, Sha256};
 
-const VERSION: &str = "v0.1.0";
+const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = concat!("v", env!("CARGO_PKG_VERSION"));
+const LOCALIZED_INSTALLER_LOCALES: &[&str] = &[
+    "ar", "de", "en", "es", "fr", "hi", "it", "ja", "ko", "pt-BR", "ru", "zh-CN",
+];
 
 fn project_path(relative: impl AsRef<Path>) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join(relative)
@@ -78,8 +82,9 @@ fn assert_installed(binary: &Path) {
         .output()
         .expect("run installed jgrep");
     assert_success(&output, "installed jgrep --version");
+    let expected_version = format!("jgrep {PACKAGE_VERSION}");
     assert!(
-        String::from_utf8_lossy(&output.stdout).starts_with("jgrep 0.1.0"),
+        String::from_utf8_lossy(&output.stdout).starts_with(&expected_version),
         "installed executable reported an unexpected version: {output:?}"
     );
 }
@@ -95,7 +100,8 @@ fn unix_target() -> &'static str {
 }
 
 #[cfg(unix)]
-fn run_unix_installer(
+fn run_unix_installer_at(
+    installer: &Path,
     asset_directory: &Path,
     target: &str,
     install_directory: &Path,
@@ -103,7 +109,7 @@ fn run_unix_installer(
 ) -> Output {
     let mut command = Command::new("bash");
     command
-        .arg(project_path("scripts/install.sh"))
+        .arg(installer)
         .args(["--asset-dir"])
         .arg(asset_directory)
         .args(["--version", VERSION, "--target", target, "--install-dir"])
@@ -115,11 +121,27 @@ fn run_unix_installer(
 }
 
 #[cfg(unix)]
-#[test]
-fn unix_installer_verifies_and_installs_a_local_release_archive() {
-    let temp = tempfile::tempdir().expect("temporary installer fixture");
-    let target = unix_target();
-    let asset_directory = temp.path().join("assets");
+fn run_unix_installer(
+    asset_directory: &Path,
+    target: &str,
+    install_directory: &Path,
+    force: bool,
+) -> Output {
+    run_unix_installer_at(
+        &project_path("scripts/install.sh"),
+        asset_directory,
+        target,
+        install_directory,
+        force,
+    )
+}
+
+#[cfg(unix)]
+fn create_unix_release_assets(
+    temporary_directory: &tempfile::TempDir,
+    target: &str,
+) -> (PathBuf, String, String) {
+    let asset_directory = temporary_directory.path().join("assets");
     let package_root = format!("localjev-grep-{VERSION}-{target}");
     let stage = asset_directory.join(&package_root);
     fs::create_dir_all(&stage).expect("create release staging directory");
@@ -138,6 +160,41 @@ fn unix_installer_verifies_and_installs_a_local_release_archive() {
         .expect("create synthesized tar archive");
     assert_success(&output, "create synthesized Unix release archive");
     write_checksum(&asset_directory, &archive_name);
+
+    (asset_directory, package_root, archive_name)
+}
+
+#[cfg(unix)]
+fn create_unix_localized_installer_bundle(temporary_directory: &tempfile::TempDir) -> PathBuf {
+    let bundle_root = temporary_directory.path().join("installer-bundle");
+    let scripts_directory = bundle_root.join("scripts");
+    fs::create_dir_all(&scripts_directory).expect("create synthetic installer scripts directory");
+    fs::copy(
+        project_path("scripts/install.sh"),
+        scripts_directory.join("install.sh"),
+    )
+    .expect("copy core Unix installer into synthetic bundle");
+
+    for locale in LOCALIZED_INSTALLER_LOCALES {
+        let destination_directory = bundle_root.join("installers").join(locale);
+        fs::create_dir_all(&destination_directory)
+            .expect("create synthetic localized installer directory");
+        fs::copy(
+            project_path(format!("installers/{locale}/install.sh")),
+            destination_directory.join("install.sh"),
+        )
+        .expect("copy localized Unix installer into synthetic bundle");
+    }
+
+    bundle_root
+}
+
+#[cfg(unix)]
+#[test]
+fn unix_installer_verifies_and_installs_a_local_release_archive() {
+    let temp = tempfile::tempdir().expect("temporary installer fixture");
+    let target = unix_target();
+    let (asset_directory, package_root, archive_name) = create_unix_release_assets(&temp, target);
 
     let install_directory = temp.path().join("bin");
     let first = run_unix_installer(&asset_directory, target, &install_directory, false);
@@ -229,6 +286,51 @@ fn unix_installer_verifies_and_installs_a_local_release_archive() {
 
 #[cfg(unix)]
 #[test]
+fn localized_installer_generator_is_current() {
+    let output = Command::new("python3")
+        .arg(project_path("scripts/generate-localized-installers.py"))
+        .arg("--check")
+        .output()
+        .expect("run localized installer generator check");
+    assert_success(&output, "localized installer generator check");
+}
+
+#[cfg(unix)]
+#[test]
+fn localized_unix_installers_delegate_to_the_core_installer() {
+    let temp = tempfile::tempdir().expect("temporary localized installer fixture");
+    let target = unix_target();
+    let (asset_directory, _, _) = create_unix_release_assets(&temp, target);
+    let bundle_root = create_unix_localized_installer_bundle(&temp);
+
+    for locale in LOCALIZED_INSTALLER_LOCALES {
+        let install_directory = temp.path().join(format!("installed-{locale}"));
+        let wrapper = bundle_root
+            .join("installers")
+            .join(locale)
+            .join("install.sh");
+        let output = run_unix_installer_at(
+            &wrapper,
+            &asset_directory,
+            target,
+            &install_directory,
+            false,
+        );
+        assert_success(&output, &format!("localized Unix installer ({locale})"));
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("localjev-grep"),
+            "localized Unix wrapper ({locale}) did not emit its start message: {output:?}"
+        );
+        assert!(
+            String::from_utf8_lossy(&output.stdout).contains("Installed jgrep"),
+            "localized Unix wrapper ({locale}) did not run the core installer: {output:?}"
+        );
+        assert_installed(&install_directory.join("jgrep"));
+    }
+}
+
+#[cfg(unix)]
+#[test]
 fn installer_and_agent_template_static_contract_is_valid() {
     let output = Command::new("bash")
         .arg(project_path("scripts/validate-installers.sh"))
@@ -252,16 +354,14 @@ fn run_powershell(arguments: impl IntoIterator<Item = OsString>) -> Output {
 }
 
 #[cfg(windows)]
-fn run_windows_installer(
+fn run_windows_installer_at(
+    installer: &Path,
     asset_directory: &Path,
     install_directory: &Path,
     version: &str,
     force: bool,
 ) -> Output {
-    let mut arguments = vec![
-        OsString::from("-File"),
-        project_path("scripts/install.ps1").into_os_string(),
-    ];
+    let mut arguments = vec![OsString::from("-File"), installer.as_os_str().to_owned()];
     arguments.extend([
         OsString::from("-AssetDirectory"),
         asset_directory.as_os_str().to_owned(),
@@ -279,11 +379,27 @@ fn run_windows_installer(
 }
 
 #[cfg(windows)]
-#[test]
-fn windows_installer_verifies_and_installs_a_local_release_archive() {
-    let temp = tempfile::tempdir().expect("temporary installer fixture");
-    let target = "x86_64-pc-windows-msvc";
-    let asset_directory = temp.path().join("assets");
+fn run_windows_installer(
+    asset_directory: &Path,
+    install_directory: &Path,
+    version: &str,
+    force: bool,
+) -> Output {
+    run_windows_installer_at(
+        &project_path("scripts/install.ps1"),
+        asset_directory,
+        install_directory,
+        version,
+        force,
+    )
+}
+
+#[cfg(windows)]
+fn create_windows_release_assets(
+    temporary_directory: &tempfile::TempDir,
+    target: &str,
+) -> (PathBuf, String, String) {
+    let asset_directory = temporary_directory.path().join("assets");
     let package_root = format!("localjev-grep-{VERSION}-{target}");
     let stage = asset_directory.join(&package_root);
     fs::create_dir_all(&stage).expect("create release staging directory");
@@ -310,6 +426,42 @@ fn windows_installer_verifies_and_installs_a_local_release_archive() {
         "create synthesized Windows release archive",
     );
     write_checksum(&asset_directory, &archive_name);
+
+    (asset_directory, package_root, archive_name)
+}
+
+#[cfg(windows)]
+fn create_windows_localized_installer_bundle(temporary_directory: &tempfile::TempDir) -> PathBuf {
+    let bundle_root = temporary_directory.path().join("installer-bundle");
+    let scripts_directory = bundle_root.join("scripts");
+    fs::create_dir_all(&scripts_directory).expect("create synthetic installer scripts directory");
+    fs::copy(
+        project_path("scripts/install.ps1"),
+        scripts_directory.join("install.ps1"),
+    )
+    .expect("copy core Windows installer into synthetic bundle");
+
+    for locale in LOCALIZED_INSTALLER_LOCALES {
+        let destination_directory = bundle_root.join("installers").join(locale);
+        fs::create_dir_all(&destination_directory)
+            .expect("create synthetic localized installer directory");
+        fs::copy(
+            project_path(format!("installers/{locale}/install.ps1")),
+            destination_directory.join("install.ps1"),
+        )
+        .expect("copy localized Windows installer into synthetic bundle");
+    }
+
+    bundle_root
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_installer_verifies_and_installs_a_local_release_archive() {
+    let temp = tempfile::tempdir().expect("temporary installer fixture");
+    let target = "x86_64-pc-windows-msvc";
+    let (asset_directory, _package_root, archive_name) =
+        create_windows_release_assets(&temp, target);
 
     let install_directory = temp.path().join("bin");
     let first = run_windows_installer(&asset_directory, &install_directory, VERSION, false);
@@ -459,5 +611,55 @@ fn windows_installer_verifies_and_installs_a_local_release_archive() {
             .next()
             .is_none(),
         "installer must not create a directory or place a file through an ancestor reparse point"
+    );
+}
+
+#[cfg(windows)]
+#[test]
+fn localized_windows_installers_delegate_to_the_core_installer() {
+    let temp = tempfile::tempdir().expect("temporary localized installer fixture");
+    let target = "x86_64-pc-windows-msvc";
+    let (asset_directory, _, _) = create_windows_release_assets(&temp, target);
+    let bundle_root = create_windows_localized_installer_bundle(&temp);
+
+    for locale in LOCALIZED_INSTALLER_LOCALES {
+        let install_directory = temp.path().join(format!("installed-{locale}"));
+        let wrapper = bundle_root
+            .join("installers")
+            .join(locale)
+            .join("install.ps1");
+        let output = run_windows_installer_at(
+            &wrapper,
+            &asset_directory,
+            &install_directory,
+            VERSION,
+            false,
+        );
+        assert_success(&output, &format!("localized Windows installer ({locale})"));
+        assert_installed(&install_directory.join("jgrep.exe"));
+    }
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_installer_keeps_handle_based_reparse_guards() {
+    let script = fs::read_to_string(project_path("scripts/install.ps1"))
+        .expect("read core Windows installer");
+
+    for required in [
+        "function Open-InstallationDirectoryGuards",
+        "$FileFlagOpenReparsePoint",
+        "$FileFlagBackupSemantics",
+        "function Copy-FileToVerifiedDestination",
+        "Open-ReparseSafePath -Path $destination",
+    ] {
+        assert!(
+            script.contains(required),
+            "Windows installer lost reparse-point guard contract: {required}"
+        );
+    }
+    assert!(
+        !script.contains("[System.IO.File]::Replace"),
+        "path-based File.Replace would reopen the checked destination"
     );
 }

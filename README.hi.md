@@ -2,7 +2,7 @@
 
 `jgrep` स्थानीय रूप से चलने वाला, अर्थ-आधारित खोज के लिए grep-जैसा कमांड है। यह प्राकृतिक-भाषा संदर्भ से इनपुट की संबंधित पंक्तियाँ चुनता है और `grep` वाली फ़ाइल तथा पाइप कार्यप्रणाली बनाए रखता है।
 
-> **v0.1.0:** संस्करण-युक्त नेटिव आर्काइव [GitHub Releases](https://github.com/xxvw/localjev-grep/releases) पर उपलब्ध हैं। यह परियोजना बेंचमार्क, सटीकता, थ्रूपुट या विलंबता की कोई गारंटी नहीं देती।
+> **v0.1.1:** संस्करण-युक्त नेटिव आर्काइव [GitHub Releases](https://github.com/xxvw/localjev-grep/releases) पर उपलब्ध हैं। यह परियोजना बेंचमार्क, सटीकता, थ्रूपुट या विलंबता की कोई गारंटी नहीं देती।
 
 डिफ़ॉल्ट अर्थ-आधारित मोड स्थानीय [Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct) मॉडल से यह द्विआधारी निर्णय लेता है कि प्रत्येक पंक्ति संदर्भ से संबंधित है या नहीं। खोजा गया टेक्स्ट किसी होस्टेड मॉडल को नहीं भेजा जाता; Python, Ollama या लगातार चलने वाली सेवा की जरूरत नहीं है। `-E` Rust रेगुलर एक्सप्रेशन और `-F` निश्चित-स्ट्रिंग मोड चुनते हैं; इनमें मॉडल डाउनलोड या लोड नहीं होता।
 
@@ -10,9 +10,77 @@
 
 ## इंस्टॉल करें
 
-[GitHub Releases](https://github.com/xxvw/localjev-grep/releases) से macOS (Apple Silicon या Intel), Windows x64, या Linux x64 (glibc 2.35 या बाद का) का आर्काइव डाउनलोड करें। उसे निकालकर निष्पादन योग्य फ़ाइल को `PATH` में रखें।
+प्राथमिक इंस्टॉलेशन पथ में `git clone` की जरूरत नहीं है। नीचे दिया गया एक-पेस्ट कमांड `v0.1.1` का संस्करण-पिन किया हुआ इंस्टॉलर बंडल डाउनलोड करता है, उसे निकालने से पहले SHA-256 से जांचता है, और फिर स्थानीय फ़ाइल चलाता है। इसमें `curl | sh` या `Invoke-Expression` का उपयोग नहीं होता। इंस्टॉलर उसके बाद macOS (Apple Silicon या Intel), Windows x64, या Linux x64 (glibc 2.35 या बाद का) के सही नेटिव आर्काइव को डाउनलोड और सत्यापित करता है।
 
-स्रोत से बनाने के लिए:
+### macOS और Linux
+
+Bash या zsh में यह एक संयुक्त कमांड पेस्ट करें:
+
+```sh
+(
+  set -e
+  version=v0.1.1
+  archive="localjev-grep-installers-${version}.tar.gz"
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "$workdir"' EXIT
+  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive.sha256" "$base/$archive.sha256"
+  (cd "$workdir" && if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 -c "$archive.sha256"
+  else
+    sha256sum -c "$archive.sha256"
+  fi)
+  tar -xzf "$workdir/$archive" -C "$workdir"
+  bash "$workdir/localjev-grep-installers-${version}/installers/hi/install.sh" \
+    --version "$version"
+)
+```
+
+### Windows PowerShell
+
+PowerShell में यह एक कमांड ब्लॉक पेस्ट करें:
+
+```powershell
+& {
+  $ErrorActionPreference = 'Stop'
+  $version = 'v0.1.1'
+  $archive = "localjev-grep-installers-$version.zip"
+  $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
+  New-Item -ItemType Directory -Path $workdir | Out-Null
+  try {
+    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
+    $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
+    $manifestPattern = '^[A-Fa-f0-9]{64}  ' + [regex]::Escape($archive) + '$'
+    if ($manifest -notmatch $manifestPattern) { throw 'installer bundle checksum manifest is invalid' }
+    $expected = $manifest.Substring(0, 64).ToLowerInvariant()
+    $actual = (Get-FileHash -LiteralPath (Join-Path $workdir $archive) -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actual -ne $expected) { throw 'installer bundle checksum mismatch' }
+    Expand-Archive -LiteralPath (Join-Path $workdir $archive) -DestinationPath $workdir -Force
+    & (Join-Path $workdir "localjev-grep-installers-$version\installers\hi\install.ps1") -Version $version
+  } finally {
+    Remove-Item -LiteralPath $workdir -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+```
+
+इस पृष्ठ में हिंदी रैपर (`hi`) चुना गया है। हर भाषा रैपर केवल स्थानीय भाषा का आरंभ संदेश दिखाता है और साझा सत्यापित कोर इंस्टॉलर को ही चलाता है; वह हर विकल्प को उसी तक भेजता है। अनुकूलन के लिए macOS/Linux वाले ब्लॉक में अंतिम `bash` इंस्टॉलर कॉल पर, `--version "$version"` के बाद, `--install-dir ~/bin` जोड़ें—उसे ब्लॉक के बाद न जोड़ें। इसी तरह PowerShell ब्लॉक के अंतिम इंस्टॉलर कॉल में `-InstallDir C:\bin` जोड़ें।
+
+macOS/Linux पर, यदि `XDG_BIN_HOME` सेट नहीं है, तो डिफ़ॉल्ट इंस्टॉल स्थान `$HOME/.local/bin` है। यदि वह पहले से `PATH` में नहीं है, तो अपने शेल कॉन्फ़िगरेशन में यह जोड़ें:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+PowerShell ब्लॉक में इंस्टॉलर कॉल की अंतिम पंक्ति में `-AddToPath` जोड़ें (`... -Version $version -AddToPath`), ताकि इंस्टॉल निर्देशिका वर्तमान उपयोगकर्ता के `PATH` और आगे की सत्रों में जोड़ी जाए।
+
+### स्रोत से बनाना (वैकल्पिक)
+
+स्रोत से बनाने के लिए `rust-toolchain.toml` में पिन किया Rust टूलचेन, CMake और एम्बेड किए गए llama.cpp को बनाने वाला C++ कंपाइलर चाहिए। यदि आप स्वयं बिल्ड करना चाहते हैं, असमर्थित आर्किटेक्चर पर काम कर रहे हैं, या पुराने Linux पर हैं जो glibc 2.35 की शर्त पूरी नहीं करता, तो इस विकल्प का उपयोग करें:
 
 ```sh
 git clone https://github.com/xxvw/localjev-grep.git
@@ -30,7 +98,7 @@ cargo build --release
 .\target\release\jgrep.exe --help
 ```
 
-स्रोत बिल्ड के लिए `rust-toolchain.toml` में पिन किया Rust टूलचेन, CMake और एम्बेड किए गए llama.cpp को बनाने वाला C++ कंपाइलर चाहिए। हर समर्थित प्लेटफ़ॉर्म पर CPU उपलब्ध है; Apple Silicon पर स्वचालित डिवाइस सेटिंग Metal का उपयोग कर सकती है।
+हर समर्थित प्लेटफ़ॉर्म पर CPU उपलब्ध है; Apple Silicon पर स्वचालित डिवाइस सेटिंग Metal का उपयोग कर सकती है। कोडिंग एजेंट में संक्षिप्त `--ai` खोज सेट करने के लिए [हिंदी एजेंट-प्लगइन मार्गदर्शिका](plugins/jgrep-agent/README.hi.md) देखें।
 
 ## उपयोग
 

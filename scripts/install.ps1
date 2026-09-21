@@ -93,6 +93,224 @@ function Assert-NoReparsePointInPath {
     return $fullPath
 }
 
+# Path-by-path attribute checks are useful diagnostics, but are not a lock:
+# another process could replace a checked directory with a junction before a
+# later file operation. Windows PowerShell 5.1 has no managed API for opening
+# a directory without following its reparse point, so use the small Win32
+# surface below for the critical installation section.
+function Initialize-NativeFileApi {
+    if ($null -ne ("JgrepInstaller.NativeFileApi" -as [type])) {
+        return
+    }
+
+    $nativeFileApiSource = @'
+using System;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+
+namespace JgrepInstaller {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct NativeFileTime {
+        public uint LowDateTime;
+        public uint HighDateTime;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct NativeFileInformation {
+        public uint FileAttributes;
+        public NativeFileTime CreationTime;
+        public NativeFileTime LastAccessTime;
+        public NativeFileTime LastWriteTime;
+        public uint VolumeSerialNumber;
+        public uint FileSizeHigh;
+        public uint FileSizeLow;
+        public uint NumberOfLinks;
+        public uint FileIndexHigh;
+        public uint FileIndexLow;
+    }
+
+    public static class NativeFileApi {
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern SafeFileHandle CreateFile(
+            string fileName,
+            uint desiredAccess,
+            uint shareMode,
+            IntPtr securityAttributes,
+            uint creationDisposition,
+            uint flagsAndAttributes,
+            IntPtr templateFile);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetFileInformationByHandle(
+            SafeFileHandle file,
+            out NativeFileInformation information);
+    }
+}
+'@
+    Add-Type -TypeDefinition $nativeFileApiSource -ErrorAction Stop
+}
+
+$FileAttributeDirectory = [uint32]0x00000010
+$FileAttributeReparsePoint = [uint32]0x00000400
+$FileReadAttributes = [uint32]0x00000080
+$FileGenericWrite = [uint32]0x40000000
+$FileShareRead = [uint32]0x00000001
+$FileShareWrite = [uint32]0x00000002
+$FileShareReadWrite = [uint32]($FileShareRead -bor $FileShareWrite)
+$FileOpenExisting = [uint32]3
+$FileCreateNew = [uint32]1
+$FileFlagBackupSemantics = [uint32]0x02000000
+$FileFlagOpenReparsePoint = [uint32]0x00200000
+
+function Get-NativeFileAttributes {
+    param(
+        [Parameter(Mandatory)]$Handle,
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Description
+    )
+
+    $information = New-Object JgrepInstaller.NativeFileInformation
+    if (-not [JgrepInstaller.NativeFileApi]::GetFileInformationByHandle(
+            $Handle,
+            [ref]$information
+        )) {
+        $errorCode = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
+        $message = (New-Object System.ComponentModel.Win32Exception($errorCode)).Message
+        Fail "could not inspect $Description without following reparse points: $Path (Win32 error $errorCode: $message)"
+    }
+    return [uint32]$information.FileAttributes
+}
+
+function Open-ReparseSafePath {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Description,
+        [Parameter(Mandatory)][uint32]$DesiredAccess,
+        [Parameter(Mandatory)][uint32]$CreationDisposition,
+        [Parameter(Mandatory)][uint32]$ShareMode,
+        [switch]$Directory
+    )
+
+    Initialize-NativeFileApi
+    $flags = $FileFlagOpenReparsePoint
+    if ($Directory) {
+        $flags = [uint32]($flags -bor $FileFlagBackupSemantics)
+    }
+    # The installation directory itself is held without write or delete
+    # sharing. Ancestors share writes to avoid interfering with normal system
+    # activity, but deny delete sharing so they cannot be renamed or replaced
+    # with a junction during the install transaction.
+    $handle = [JgrepInstaller.NativeFileApi]::CreateFile(
+        $Path,
+        $DesiredAccess,
+        $ShareMode,
+        [IntPtr]::Zero,
+        $CreationDisposition,
+        $flags,
+        [IntPtr]::Zero
+    )
+    if ($handle.IsInvalid) {
+        $errorCode = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
+        $message = (New-Object System.ComponentModel.Win32Exception($errorCode)).Message
+        $handle.Dispose()
+        Fail "could not open $Description without following reparse points: $Path (Win32 error $errorCode: $message)"
+    }
+
+    try {
+        $attributes = Get-NativeFileAttributes -Handle $handle -Path $Path -Description $Description
+        if (($attributes -band $FileAttributeReparsePoint) -ne 0) {
+            Fail "$Description is a symbolic link or reparse point: $Path"
+        }
+        if ($Directory -and (($attributes -band $FileAttributeDirectory) -eq 0)) {
+            Fail "$Description is not a directory: $Path"
+        }
+        return $handle
+    }
+    catch {
+        $handle.Dispose()
+        throw
+    }
+}
+
+function Open-InstallationDirectoryGuards {
+    param([Parameter(Mandatory)][string]$Path)
+
+    $fullPath = [System.IO.Path]::GetFullPath($Path)
+    $root = [System.IO.Path]::GetPathRoot($fullPath)
+    if ([string]::IsNullOrWhiteSpace($root)) {
+        Fail "invalid installation directory path: $Path"
+    }
+
+    $guards = New-Object System.Collections.ArrayList
+    try {
+        [void]$guards.Add((Open-ReparseSafePath -Path $root -Description "installation directory ancestor" -DesiredAccess $FileReadAttributes -CreationDisposition $FileOpenExisting -ShareMode $FileShareReadWrite -Directory))
+        $currentPath = $root
+        $relativePath = $fullPath.Substring($root.Length)
+        foreach ($component in ($relativePath -split '[\\/]')) {
+            if ([string]::IsNullOrWhiteSpace($component)) {
+                continue
+            }
+            $currentPath = Join-Path $currentPath $component
+            $shareMode = if ($currentPath -ieq $fullPath) { $FileShareRead } else { $FileShareReadWrite }
+            [void]$guards.Add((Open-ReparseSafePath -Path $currentPath -Description "installation directory ancestor" -DesiredAccess $FileReadAttributes -CreationDisposition $FileOpenExisting -ShareMode $shareMode -Directory))
+        }
+        return $guards
+    }
+    catch {
+        foreach ($guard in $guards) {
+            $guard.Dispose()
+        }
+        throw
+    }
+}
+
+function Close-InstallationDirectoryGuards {
+    param([Parameter(Mandatory)]$Guards)
+
+    foreach ($guard in $Guards) {
+        $guard.Dispose()
+    }
+}
+
+function Copy-FileToVerifiedDestination {
+    param(
+        [Parameter(Mandatory)][string]$Source,
+        [Parameter(Mandatory)][string]$Destination,
+        [Parameter(Mandatory)][bool]$CreateNew
+    )
+
+    $disposition = if ($CreateNew) { $FileCreateNew } else { $FileOpenExisting }
+    $destinationHandle = Open-ReparseSafePath -Path $Destination -Description "installation destination" -DesiredAccess ([uint32]($FileGenericWrite -bor $FileReadAttributes)) -CreationDisposition $disposition -ShareMode $FileShareRead
+    $output = $null
+    $input = $null
+    try {
+        $output = New-Object System.IO.FileStream($destinationHandle, [System.IO.FileAccess]::Write)
+        $input = [System.IO.File]::Open(
+            $Source,
+            [System.IO.FileMode]::Open,
+            [System.IO.FileAccess]::Read,
+            [System.IO.FileShare]::Read
+        )
+        if (-not $CreateNew) {
+            $output.SetLength(0)
+        }
+        $input.CopyTo($output)
+        $output.Flush($true)
+    }
+    finally {
+        if ($null -ne $input) {
+            $input.Dispose()
+        }
+        if ($null -ne $output) {
+            $output.Dispose()
+        }
+        else {
+            $destinationHandle.Dispose()
+        }
+    }
+}
+
 function Normalize-Tag {
     param([Parameter(Mandatory)][string]$Value)
 
@@ -452,63 +670,66 @@ try {
         New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
     }
     $InstallDir = Assert-NoReparsePointInPath -Path $InstallDir -Description "installation directory"
-    $destination = Join-Path $InstallDir "jgrep.exe"
-    Assert-NoReparsePointInPath -Path $destination -Description "installation destination" | Out-Null
-    $destinationItem = Get-ExistingPathItem -Path $destination -Description "installation destination"
-    if ($null -ne $destinationItem) {
-        if (($destinationItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
-            Fail "installation destination is a symbolic link or reparse point: $destination"
-        }
-        if (-not (Test-Path -LiteralPath $destination -PathType Leaf)) {
-            Fail "installation destination is not a file: $destination"
-        }
-        if (-not $Force) {
-            Fail "$destination already exists; rerun with -Force to replace it"
-        }
-    }
-
-    $stagedBinary = Join-Path $InstallDir (".jgrep-" + [guid]::NewGuid().ToString("N") + ".exe")
-    $backupBinary = Join-Path $InstallDir (".jgrep-backup-" + [guid]::NewGuid().ToString("N") + ".exe")
+    $directoryGuards = Open-InstallationDirectoryGuards -Path $InstallDir
     try {
-        Copy-ZipEntryToFile -ArchivePath $archivePath -EntryName $entryName -Destination $stagedBinary
-        if ((Get-Item -LiteralPath $stagedBinary).Length -le 0) {
-            Fail "release archive contains an empty jgrep executable"
-        }
-        $expectedVersion = "jgrep $($tag.Substring(1))"
-        $reportedVersion = @(& $stagedBinary --version)
-        if ($LASTEXITCODE -ne 0) {
-            Fail "release archive contains a jgrep executable that could not run; the current Visual C++ Redistributable may be missing"
-        }
-        if (($reportedVersion -join "`n") -cne $expectedVersion) {
-            Fail "release archive version mismatch: expected $expectedVersion, got $($reportedVersion -join "`n")"
+        $destination = Join-Path $InstallDir "jgrep.exe"
+        Assert-NoReparsePointInPath -Path $destination -Description "installation destination" | Out-Null
+        $destinationItem = Get-ExistingPathItem -Path $destination -Description "installation destination"
+        if ($null -ne $destinationItem) {
+            if (($destinationItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                Fail "installation destination is a symbolic link or reparse point: $destination"
+            }
+            if (-not (Test-Path -LiteralPath $destination -PathType Leaf)) {
+                Fail "installation destination is not a file: $destination"
+            }
+            if (-not $Force) {
+                Fail "$destination already exists; rerun with -Force to replace it"
+            }
         }
 
-        if ($null -ne $destinationItem) {
-            [System.IO.File]::Replace($stagedBinary, $destination, $backupBinary, $true)
+        $stagedBinary = Join-Path $InstallDir (".jgrep-" + [guid]::NewGuid().ToString("N") + ".exe")
+        try {
+            Copy-ZipEntryToFile -ArchivePath $archivePath -EntryName $entryName -Destination $stagedBinary
+            if ((Get-Item -LiteralPath $stagedBinary).Length -le 0) {
+                Fail "release archive contains an empty jgrep executable"
+            }
+            $expectedVersion = "jgrep $($tag.Substring(1))"
+            $reportedVersion = @(& $stagedBinary --version)
+            if ($LASTEXITCODE -ne 0) {
+                Fail "release archive contains a jgrep executable that could not run; the current Visual C++ Redistributable may be missing"
+            }
+            if (($reportedVersion -join "`n") -cne $expectedVersion) {
+                Fail "release archive version mismatch: expected $expectedVersion, got $($reportedVersion -join "`n")"
+            }
+
+            # Do not use path-based Replace/Move after validation. The final
+            # entry is opened with FILE_FLAG_OPEN_REPARSE_POINT and written
+            # through that verified handle while the ancestor guards remain
+            # open, closing the check-to-write junction race.
+            Copy-FileToVerifiedDestination -Source $stagedBinary -Destination $destination -CreateNew ($null -eq $destinationItem)
+            $verificationHandle = Open-ReparseSafePath -Path $destination -Description "installation destination" -DesiredAccess $FileReadAttributes -CreationDisposition $FileOpenExisting -ShareMode $FileShareRead
+            $verificationHandle.Dispose()
         }
-        else {
-            [System.IO.File]::Move($stagedBinary, $destination)
+        finally {
+            if (Test-Path -LiteralPath $stagedBinary) {
+                Remove-Item -LiteralPath $stagedBinary -Force
+            }
+        }
+
+        & $destination --version
+        if ($LASTEXITCODE -ne 0) {
+            Fail "installed jgrep could not run; the current Visual C++ Redistributable may be missing"
+        }
+        Write-Host "Installed jgrep $tag at $destination"
+        if ($AddToPath) {
+            Add-InstallDirectoryToUserPath -Directory $InstallDir
+        }
+        elseif ((@($env:Path -split ";") -notcontains $InstallDir)) {
+            Write-Host "Add $InstallDir to your user PATH, or rerun this script with -AddToPath."
         }
     }
     finally {
-        if (Test-Path -LiteralPath $stagedBinary) {
-            Remove-Item -LiteralPath $stagedBinary -Force
-        }
-        if (Test-Path -LiteralPath $backupBinary) {
-            Remove-Item -LiteralPath $backupBinary -Force
-        }
-    }
-
-    & $destination --version
-    if ($LASTEXITCODE -ne 0) {
-        Fail "installed jgrep could not run; the current Visual C++ Redistributable may be missing"
-    }
-    Write-Host "Installed jgrep $tag at $destination"
-    if ($AddToPath) {
-        Add-InstallDirectoryToUserPath -Directory $InstallDir
-    }
-    elseif ((@($env:Path -split ";") -notcontains $InstallDir)) {
-        Write-Host "Add $InstallDir to your user PATH, or rerun this script with -AddToPath."
+        Close-InstallationDirectoryGuards -Guards $directoryGuards
     }
 }
 finally {

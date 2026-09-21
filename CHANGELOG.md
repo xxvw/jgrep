@@ -6,6 +6,25 @@ released versions will use [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-21
+
+### Added
+
+- Versioned, checksum-verified installer bundles for macOS, Linux, and Windows,
+  with localized Bash and PowerShell wrappers for all 12 README languages.
+- Clone-free, one-paste installation guidance that downloads a pinned bundle,
+  verifies it before extraction, and delegates to the existing verified native
+  installer.
+- The `jgrep-agent` Codex skills-only plugin, marketplace manifest, and 12
+  localized agent-plugin READMEs.
+- Release checks that package and verify installer bundles, localized wrappers,
+  marketplace metadata, and plugin files alongside the native archives.
+
+### Fixed
+
+- GitHub Markdown rendering of Windows paths in Spanish and Russian agent
+  READMEs, plus score-prefix inline-code spacing in the English documentation.
+
 ## [0.1.0] - 2026-09-20
 
 ### Added

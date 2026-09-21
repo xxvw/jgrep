@@ -15,14 +15,86 @@ befürwortet oder vertrieben. Die maßgebliche Dokumentation ist die englische
 
 ## Installation
 
-Native Archive für macOS (Apple Silicon und Intel), Windows x64 sowie Linux
-x64 (glibc 2.35 oder neuer) gibt es unter
-[GitHub Releases](https://github.com/xxvw/localjev-grep/releases). Nach dem
-Entpacken `jgrep` beziehungsweise `jgrep.exe` in den `PATH` aufnehmen.
+Installieren Sie ohne das Repository zu klonen: Kopieren Sie den vollständigen
+Block für Ihre Plattform als einen einzelnen Befehl in die Shell. Er lädt das
+auf `v0.1.1` festgelegte Installationspaket, prüft dessen SHA-256 vor dem
+Entpacken und startet einen Wrapper mit deutscher Startmeldung. Der Wrapper
+delegiert an den gemeinsamen geprüften Kerninstaller, der das passende native
+Archiv für macOS (Apple Silicon und Intel), Windows x64 oder Linux x64 (glibc
+2.35 oder neuer) auswählt und erneut prüft.
 
-Für eine lokale Kompilierung werden die in `rust-toolchain.toml` festgelegte
-Rust-Toolchain, CMake und ein C++-Compiler für das eingebettete llama.cpp
-benötigt:
+### macOS und Linux
+
+Diesen einzelnen zusammengesetzten Befehl vollständig in Bash oder zsh einfügen:
+
+```sh
+(
+  set -e
+  version=v0.1.1
+  archive="localjev-grep-installers-${version}.tar.gz"
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "$workdir"' EXIT
+  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive.sha256" "$base/$archive.sha256"
+  (cd "$workdir" && if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 -c "$archive.sha256"
+  else
+    sha256sum -c "$archive.sha256"
+  fi)
+  tar -xzf "$workdir/$archive" -C "$workdir"
+  bash "$workdir/localjev-grep-installers-${version}/installers/de/install.sh" \
+    --version "$version"
+)
+```
+
+### Windows PowerShell
+
+Diesen einzelnen PowerShell-Block vollständig einfügen:
+
+```powershell
+& {
+  $ErrorActionPreference = 'Stop'
+  $version = 'v0.1.1'
+  $archive = "localjev-grep-installers-$version.zip"
+  $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
+  New-Item -ItemType Directory -Path $workdir | Out-Null
+  try {
+    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
+    $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
+    $manifestPattern = '^[A-Fa-f0-9]{64}  ' + [regex]::Escape($archive) + '$'
+    if ($manifest -notmatch $manifestPattern) { throw 'installer bundle checksum manifest is invalid' }
+    $expected = $manifest.Substring(0, 64).ToLowerInvariant()
+    $actual = (Get-FileHash -LiteralPath (Join-Path $workdir $archive) -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actual -ne $expected) { throw 'installer bundle checksum mismatch' }
+    Expand-Archive -LiteralPath (Join-Path $workdir $archive) -DestinationPath $workdir -Force
+    & (Join-Path $workdir "localjev-grep-installers-$version\installers\de\install.ps1") -Version $version
+  } finally {
+    Remove-Item -LiteralPath $workdir -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+```
+
+Diese Befehle verwenden weder `git clone`, `curl | sh` noch
+`Invoke-Expression`. Unter macOS/Linux ist `$HOME/.local/bin` das
+Standardziel (oder `$XDG_BIN_HOME`, wenn gesetzt); bei Bedarf diesen Ordner zu
+`PATH` hinzufügen. In PowerShell `-AddToPath` an den abschließenden
+Installer-Aufruf anhängen, um den Ordner zum Benutzer-`PATH` hinzuzufügen.
+Optionen, Offline-Installationen und Zielverzeichnisse beschreibt die
+[Installationsanleitung](docs/installation-and-agents.md). Für die Einrichtung
+eines Programmieragenten siehe die
+[jgrep-Agent-Plugin-Anleitung](plugins/jgrep-agent/README.de.md).
+
+### Optionale Kompilierung aus dem Quellcode
+
+Für Entwicklung sowie auf nicht unterstützten Architekturen oder älterem Linux
+kann das Projekt aus dem Quellcode gebaut werden; dafür werden die in
+`rust-toolchain.toml` festgelegte Rust-Toolchain, CMake und ein C++-Compiler
+für das eingebettete llama.cpp benötigt:
 
 ```sh
 git clone https://github.com/xxvw/localjev-grep.git

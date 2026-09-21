@@ -168,7 +168,35 @@ jobs:
           }
 
           $contents = Join-Path $verifyDirectory $packageRoot
-          @("README.md", "LICENSE", "NOTICE", "LICENSES", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES.html", "SOURCE.txt", "AGENTS.md", "scripts/install.sh", "scripts/install.ps1", "scripts/validate-installers.sh", "templates/AGENTS.jgrep.md") | ForEach-Object {
+          $required = @(
+            "README.md",
+            "LICENSE",
+            "NOTICE",
+            "LICENSES",
+            "THIRD_PARTY_NOTICES.md",
+            "THIRD_PARTY_LICENSES.html",
+            "SOURCE.txt",
+            "AGENTS.md",
+            "scripts/install.sh",
+            "scripts/install.ps1",
+            "scripts/validate-installers.sh",
+            "scripts/generate-localized-installers.py",
+            ".agents/plugins/marketplace.json",
+            "plugins/jgrep-agent/.codex-plugin/plugin.json",
+            "plugins/jgrep-agent/skills/jgrep-agent/SKILL.md",
+            "templates/AGENTS.jgrep.md"
+          )
+          $locales = @("en", "ja", "zh-CN", "ko", "es", "de", "ru", "fr", "pt-BR", "it", "ar", "hi")
+          foreach ($locale in $locales) {
+            $required += "installers/$locale/install.sh"
+            $required += "installers/$locale/install.ps1"
+            if ($locale -eq "en") {
+              $required += "plugins/jgrep-agent/README.md"
+            } else {
+              $required += "plugins/jgrep-agent/README.$locale.md"
+            }
+          }
+          $required | ForEach-Object {
             if (-not (Test-Path -LiteralPath (Join-Path $contents $_))) {
               throw "release archive is missing required content: $_"
             }
@@ -195,17 +223,17 @@ jobs:
           }
           $assetDirectory = (Resolve-Path -LiteralPath "dist").Path
           if ($env:ARCHIVE_FORMAT -eq "zip") {
-            $installer = Join-Path $contents "scripts/install.ps1"
+            $installer = Join-Path $contents "installers/en/install.ps1"
             & pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $installer `
               -AssetDirectory $assetDirectory -Version "v$version" -Target $env:TARGET `
               -InstallDir $installDirectory
-            if ($LASTEXITCODE -ne 0) { throw "packaged PowerShell installer failed" }
+            if ($LASTEXITCODE -ne 0) { throw "packaged localized PowerShell installer failed" }
             $installed = Join-Path $installDirectory "jgrep.exe"
           } else {
-            $installer = Join-Path $contents "scripts/install.sh"
+            $installer = Join-Path $contents "installers/en/install.sh"
             & bash $installer --asset-dir $assetDirectory --version "v$version" `
               --target $env:TARGET --install-dir $installDirectory
-            if ($LASTEXITCODE -ne 0) { throw "packaged Bash installer failed" }
+            if ($LASTEXITCODE -ne 0) { throw "packaged localized Bash installer failed" }
             $installed = Join-Path $installDirectory "jgrep"
           }
           & $installed --version
@@ -219,6 +247,123 @@ jobs:
             dist/*.tar.gz
             dist/*.zip
             dist/*.sha256
+          if-no-files-found: error
+
+  build-installer-bundles:
+    name: Build standalone installer bundles
+    needs: verify-release-input
+    runs-on: ubuntu-24.04
+    # This job packages only the checked installer sources and documentation.
+    # It deliberately does not build jgrep or download the Qwen model.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create versioned installer bundles and checksums
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          ./scripts/release/package-installers.ps1 `
+            -Version $version `
+            -OutputDirectory "dist" `
+            -Repository $env:GITHUB_REPOSITORY `
+            -Ref $env:GITHUB_REF_NAME
+
+      - name: Verify installer-bundle checksums and contents
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          $bundleRoot = "localjev-grep-installers-v$version"
+          $archives = @(
+            "dist/$bundleRoot.tar.gz",
+            "dist/$bundleRoot.zip"
+          )
+
+          foreach ($archive in $archives) {
+            $checksum = "$archive.sha256"
+            if (-not (Test-Path -LiteralPath $archive -PathType Leaf)) {
+              throw "missing installer bundle: $archive"
+            }
+            if (-not (Test-Path -LiteralPath $checksum -PathType Leaf)) {
+              throw "missing installer bundle checksum: $checksum"
+            }
+
+            $manifest = (Get-Content -LiteralPath $checksum -Raw).Trim() -split '\s+'
+            if ($manifest.Count -lt 2 -or $manifest[1] -ne (Split-Path -Leaf $archive)) {
+              throw "installer bundle checksum has an invalid manifest name: $checksum"
+            }
+            $expected = $manifest[0].ToLowerInvariant()
+            $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actual -ne $expected) {
+              throw "installer bundle checksum does not match: $checksum"
+            }
+          }
+
+          $required = @(
+            "README.md",
+            "LICENSE",
+            "NOTICE",
+            "THIRD_PARTY_NOTICES.md",
+            "LICENSES",
+            "SOURCE.txt",
+            "AGENTS.md",
+            "CHANGELOG.md",
+            "CONTRIBUTING.md",
+            "SECURITY.md",
+            "CODE_OF_CONDUCT.md",
+            "RELEASING.md",
+            "templates/AGENTS.jgrep.md",
+            "eval/README.md",
+            "scripts/install.sh",
+            "scripts/install.ps1",
+            ".agents/plugins/marketplace.json",
+            "plugins/jgrep-agent/.codex-plugin/plugin.json",
+            "plugins/jgrep-agent/skills/jgrep-agent/SKILL.md"
+          )
+          $locales = @("en", "ja", "zh-CN", "ko", "es", "de", "ru", "fr", "pt-BR", "it", "ar", "hi")
+          foreach ($locale in $locales) {
+            $required += "installers/$locale/install.sh"
+            $required += "installers/$locale/install.ps1"
+            if ($locale -eq "en") {
+              $required += "plugins/jgrep-agent/README.md"
+            } else {
+              $required += "plugins/jgrep-agent/README.$locale.md"
+            }
+          }
+
+          $tarContents = @(& tar -tzf $archives[0])
+          if ($LASTEXITCODE -ne 0) { throw "could not list $($archives[0])" }
+          foreach ($path in $required) {
+            if ($tarContents -notcontains "$bundleRoot/$path") {
+              throw "installer tarball is missing required content: $path"
+            }
+          }
+
+          $verifyDirectory = Join-Path $env:RUNNER_TEMP "jgrep-installer-bundle-verify"
+          if (Test-Path -LiteralPath $verifyDirectory) {
+            Remove-Item -LiteralPath $verifyDirectory -Recurse -Force
+          }
+          Expand-Archive -LiteralPath $archives[1] -DestinationPath $verifyDirectory -Force
+          $contents = Join-Path $verifyDirectory $bundleRoot
+          foreach ($path in $required) {
+            if (-not (Test-Path -LiteralPath (Join-Path $contents $path))) {
+              throw "installer zip is missing required content: $path"
+            }
+          }
+
+          # The locale wrapper only delegates to the bundled core installer;
+          # --help makes that linkage observable without a binary, network, or model.
+          & bash (Join-Path $contents "installers/en/install.sh") --help
+          if ($LASTEXITCODE -ne 0) { throw "bundled localized Bash installer failed" }
+
+      - name: Upload checked installer bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-installers
+          path: |
+            dist/localjev-grep-installers-*.tar.gz
+            dist/localjev-grep-installers-*.zip
+            dist/localjev-grep-installers-*.sha256
           if-no-files-found: error
 
   release-model-smoke:
@@ -297,12 +442,12 @@ jobs:
 
   publish:
     name: Verify checksums and publish GitHub Release
-    needs: [build-package, release-model-smoke]
+    needs: [build-package, build-installer-bundles, release-model-smoke]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
-      - name: Download all native release assets
+      - name: Download all release assets
         uses: actions/download-artifact@v4
         with:
           pattern: release-*
@@ -316,7 +461,23 @@ jobs:
           cd release-assets
           shopt -s nullglob
           manifests=( *.sha256 )
-          test "${#manifests[@]}" -eq 4
+          archives=( *.tar.gz *.zip )
+          test "${#manifests[@]}" -eq 6
+          test "${#archives[@]}" -eq 6
+
+          version="${GITHUB_REF_NAME#v}"
+          expected_archives=(
+            "localjev-grep-v${version}-x86_64-unknown-linux-gnu.tar.gz"
+            "localjev-grep-v${version}-x86_64-apple-darwin.tar.gz"
+            "localjev-grep-v${version}-aarch64-apple-darwin.tar.gz"
+            "localjev-grep-v${version}-x86_64-pc-windows-msvc.zip"
+            "localjev-grep-installers-v${version}.tar.gz"
+            "localjev-grep-installers-v${version}.zip"
+          )
+          for archive in "${expected_archives[@]}"; do
+            test -f "$archive"
+            test -f "$archive.sha256"
+          done
           for manifest in "${manifests[@]}"; do
             sha256sum --check "$manifest"
           done

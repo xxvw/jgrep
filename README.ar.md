@@ -2,15 +2,83 @@
 
 `jgrep` هو أمر بحث محلي بأسلوب `grep`: يطبع أسطر الإدخال التي يتوافق معناها مع سياق مكتوب بلغة طبيعية، مع الإبقاء على أسلوب العمل المعتاد بالملفات والأنابيب.
 
-> **الإصدار 0.1.0:** تتوفر أرشيفات أصلية مُرقّمة للإصدارات عبر [GitHub Releases](https://github.com/xxvw/localjev-grep/releases). لا يقدّم المشروع ضمانات للدقة أو نتائج معيارية للأداء.
+> **الإصدار 0.1.1:** تتوفر أرشيفات أصلية مُرقّمة للإصدارات عبر [GitHub Releases](https://github.com/xxvw/localjev-grep/releases). لا يقدّم المشروع ضمانات للدقة أو نتائج معيارية للأداء.
 
 في الوضع الافتراضي، يستخدم `jgrep` نموذجًا محليًا لاتخاذ قرار صلة ثنائي لكل سطر. لا يرسل النص الذي تبحث فيه إلى نموذج مستضاف، ولا يحتاج إلى Python أو Ollama أو خدمة تعمل في الخلفية. المشروع مستقل، وليس تابعًا لـ Jev أو TypeSafe أو Qwen أو Hugging Face أو llama.cpp، ولا يحظى بتأييد أيٍّ منها، ولا يُعدّ توزيعًا لأيٍّ منها.
 
 ## التثبيت
 
-نزّل الأرشيف المناسب لـ macOS (Apple Silicon أو Intel)، أو Windows x64، أو Linux x64 (glibc 2.35 أو أحدث) من [GitHub Releases](https://github.com/xxvw/localjev-grep/releases)، ثم فك ضغطه وأضف الملف التنفيذي إلى `PATH`.
+مسار التثبيت الأساسي لا يحتاج إلى `git clone`: ينزّل الأمر التالي حزمة المثبّت الثابتة للإصدار `v0.1.1`، ويتحقق من SHA-256 قبل فكّها، ثم يشغّل ملفًا محليًا. لا يستخدم `curl | sh` أو `Invoke-Expression`. ينزّل المثبّت بعد ذلك أرشيفًا أصليًا مناسبًا لـ macOS (Apple Silicon أو Intel)، أو Windows x64، أو Linux x64 (glibc 2.35 أو أحدث)، ويتحقق منه أيضًا.
 
-للبناء من المصدر، يتطلب المشروع سلسلة أدوات Rust المحددة في `rust-toolchain.toml`، وCMake، ومترجم C++ لبناء اعتماد llama.cpp المضمّن.
+### macOS وLinux
+
+الصق هذا الأمر المركب الواحد في Bash أو zsh:
+
+```sh
+(
+  set -e
+  version=v0.1.1
+  archive="localjev-grep-installers-${version}.tar.gz"
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "$workdir"' EXIT
+  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive.sha256" "$base/$archive.sha256"
+  (cd "$workdir" && if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 -c "$archive.sha256"
+  else
+    sha256sum -c "$archive.sha256"
+  fi)
+  tar -xzf "$workdir/$archive" -C "$workdir"
+  bash "$workdir/localjev-grep-installers-${version}/installers/ar/install.sh" \
+    --version "$version"
+)
+```
+
+### Windows PowerShell
+
+الصق كتلة الأمر الواحدة التالية في PowerShell:
+
+```powershell
+& {
+  $ErrorActionPreference = 'Stop'
+  $version = 'v0.1.1'
+  $archive = "localjev-grep-installers-$version.zip"
+  $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
+  New-Item -ItemType Directory -Path $workdir | Out-Null
+  try {
+    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
+    $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
+    $manifestPattern = '^[A-Fa-f0-9]{64}  ' + [regex]::Escape($archive) + '$'
+    if ($manifest -notmatch $manifestPattern) { throw 'installer bundle checksum manifest is invalid' }
+    $expected = $manifest.Substring(0, 64).ToLowerInvariant()
+    $actual = (Get-FileHash -LiteralPath (Join-Path $workdir $archive) -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actual -ne $expected) { throw 'installer bundle checksum mismatch' }
+    Expand-Archive -LiteralPath (Join-Path $workdir $archive) -DestinationPath $workdir -Force
+    & (Join-Path $workdir "localjev-grep-installers-$version\installers\ar\install.ps1") -Version $version
+  } finally {
+    Remove-Item -LiteralPath $workdir -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+```
+
+تستخدم هذه الصفحة الغلاف العربي (`ar`). كل غلاف للغات هو رسالة بدء مترجمة فقط، ويفوّض التثبيت إلى المثبّت الأساسي المشترك المتحقق منه؛ ويمرّر إليه كل الخيارات. للتخصيص، أضف `--install-dir ~/bin` إلى استدعاء `bash` الأخير داخل كتلة macOS أو Linux، بعد `--version "$version"`، ولا تضفه بعد الكتلة. وبالمثل، أضف `-InstallDir C:\bin` إلى استدعاء المثبّت الأخير داخل كتلة PowerShell.
+
+بعد نجاح التثبيت في macOS أو Linux، يكون مسار التثبيت الافتراضي هو `$HOME/.local/bin` عندما لا يعيَّن `XDG_BIN_HOME`. أضفه إلى `PATH` في إعدادات الصدفة إذا لم يكن موجودًا:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+في PowerShell، أضف `-AddToPath` إلى استدعاء المثبّت الأخير داخل كتلة الأمر (`... -Version $version -AddToPath`) لإضافة مجلد التثبيت إلى `PATH` للمستخدم الحالي والجلسات المستقبلية.
+
+### البناء من المصدر (اختياري)
+
+للبناء من المصدر، يتطلب المشروع سلسلة أدوات Rust المحددة في `rust-toolchain.toml`، وCMake، ومترجم C++ لبناء اعتماد llama.cpp المضمّن. استخدم هذا المسار إذا أردت بناء البرنامج بنفسك، أو كنت تعمل على بنية غير مدعومة، أو كان نظام Linux أقدم ولا يفي بمتطلب glibc 2.35:
 
 **Bash / zsh:**
 
@@ -29,6 +97,8 @@ Set-Location localjev-grep
 cargo build --release
 .\target\release\jgrep.exe --help
 ```
+
+لإعداد وكيل برمجة مثل Codex لاستخدام البحث المختصر `--ai`، راجع [دليل إضافة الوكيل باللغة العربية](plugins/jgrep-agent/README.ar.md).
 
 ## الاستخدام
 

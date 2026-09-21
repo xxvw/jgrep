@@ -10,6 +10,10 @@
 *.ps1 text
 *.sh text
 
+# Generated localized PowerShell wrappers are byte-checked and use a UTF-8
+# BOM plus CRLF so Windows PowerShell 5.1 reads their localized messages.
+installers/*/install.ps1 text eol=crlf
+
 # Model and packaged artifacts are not text.
 *.gguf binary
 *.zip binary

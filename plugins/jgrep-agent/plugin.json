@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "jgrep-agent",
+  "version": "0.1.1",
+  "description": "Guide coding agents to locate code with compact jgrep searches.",
+  "author": {
+    "name": "xxvw",
+    "url": "https://github.com/xxvw"
+  },
+  "homepage": "https://github.com/xxvw/localjev-grep/tree/main/plugins/jgrep-agent",
+  "repository": "https://github.com/xxvw/localjev-grep",
+  "license": "GPL-3.0-or-later",
+  "keywords": [
+    "jgrep",
+    "code-search",
+    "coding-agents",
+    "semantic-search"
+  ]
+}

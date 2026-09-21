@@ -2,7 +2,7 @@
 
 `jgrep`은 자연어 문맥과 의미가 맞는 입력 줄을 찾는 로컬 grep 스타일 CLI입니다. 기본 의미 검색에서는 로컬 Qwen 모델이 각 줄의 관련성을 Yes/No로 판정하고, 선택된 원본 줄을 출력합니다. `-E` 정규식과 `-F` 고정 문자열의 일반 검색도 제공합니다.
 
-> **v0.1.0:** macOS(Apple Silicon/Intel), Windows x64, Linux x64용 버전별 네이티브 아카이브는 [GitHub Releases](https://github.com/xxvw/localjev-grep/releases)에서 받을 수 있습니다. 정확도·처리량·지연 시간에 관한 벤치마크 보장은 제공하지 않습니다.
+> **v0.1.1:** macOS(Apple Silicon/Intel), Windows x64, Linux x64용 버전별 네이티브 아카이브는 [GitHub Releases](https://github.com/xxvw/localjev-grep/releases)에서 받을 수 있습니다. 정확도·처리량·지연 시간에 관한 벤치마크 보장은 제공하지 않습니다.
 
 `jgrep`은 Jev의 예/아니오 판정 상호작용 방식을 참고했을 뿐입니다. 이 프로젝트는 Jev, TypeSafe, Qwen, Hugging Face, llama.cpp와 제휴하거나 이들의 승인을 받은 적이 없으며, 이들 어느 하나의 배포판도 아닙니다. 자세한 기능 명세는 영어 정본 [README.md](README.md)를 따릅니다.
 
@@ -10,9 +10,77 @@
 
 ## 설치
 
-지원 아카이브는 macOS Apple Silicon/Intel, Windows x64, Linux x64(glibc 2.35 이상)용입니다. 운영체제에 맞는 압축 파일은 [GitHub Releases](https://github.com/xxvw/localjev-grep/releases)에서 다운로드합니다.
+`git clone` 없이 아래 명령 블록 하나를 한 번만 붙여 넣어 설치할 수 있습니다. 버전이
+고정된 설치 프로그램 묶음을 내려받고, 압축을 풀기 전에 SHA-256을 검증한 뒤 로컬의
+한국어 래퍼를 실행합니다. macOS Apple Silicon/Intel, Windows x64, Linux x64(glibc
+2.35 이상)를 지원합니다. 같은 릴리스에서 받은 체크섬은 전송 손상과 잘못된 자산 조합을
+찾지만, 서명에 의한 게시자 신원 증명은 아닙니다.
+한국어 래퍼는 현지화된 시작 메시지만 보여 주며, 처리와 모든 안전 검증은 공유되는 검증된
+핵심 설치 프로그램에 위임합니다.
 
-소스에서 빌드하려면 다음을 실행합니다.
+Bash / zsh에 한 번 전체를 붙여 넣으세요.
+
+```sh
+(
+  set -e
+  version=v0.1.1
+  archive="localjev-grep-installers-${version}.tar.gz"
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "$workdir"' EXIT
+  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive.sha256" "$base/$archive.sha256"
+  (cd "$workdir" && if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 -c "$archive.sha256"
+  else
+    sha256sum -c "$archive.sha256"
+  fi)
+  tar -xzf "$workdir/$archive" -C "$workdir"
+  bash "$workdir/localjev-grep-installers-${version}/installers/ko/install.sh" \
+    --version "$version"
+)
+```
+
+Windows PowerShell에 한 번 전체를 붙여 넣으세요.
+
+```powershell
+& {
+  $ErrorActionPreference = 'Stop'
+  $version = 'v0.1.1'
+  $archive = "localjev-grep-installers-$version.zip"
+  $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
+  New-Item -ItemType Directory -Path $workdir | Out-Null
+  try {
+    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
+    $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
+    $manifestPattern = '^[A-Fa-f0-9]{64}  ' + [regex]::Escape($archive) + '$'
+    if ($manifest -notmatch $manifestPattern) { throw 'installer bundle checksum manifest is invalid' }
+    $expected = $manifest.Substring(0, 64).ToLowerInvariant()
+    $actual = (Get-FileHash -LiteralPath (Join-Path $workdir $archive) -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actual -ne $expected) { throw 'installer bundle checksum mismatch' }
+    Expand-Archive -LiteralPath (Join-Path $workdir $archive) -DestinationPath $workdir -Force
+    & (Join-Path $workdir "localjev-grep-installers-$version\installers\ko\install.ps1") -Version $version
+  } finally {
+    Remove-Item -LiteralPath $workdir -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+```
+
+이 절차는 `curl | sh`나 `Invoke-Expression`을 사용하지 않습니다. 설치 경로 등의 옵션과
+오프라인 자산 사용법은 [설치 및 코딩 에이전트 통합 안내](docs/installation-and-agents.md)를
+보세요. 코딩 에이전트 설정은 [한국어 `jgrep-agent` 플러그인 안내](plugins/jgrep-agent/README.ko.md)에
+있습니다.
+Unix의 기본 설치 경로는 `$HOME/.local/bin`입니다. PowerShell에서는 마지막
+`-Version $version`을 `-Version $version -AddToPath`로 바꾸면 선택한 설치 경로를 사용자
+`PATH`에 추가할 수 있습니다.
+
+### 소스에서 빌드하기(선택 사항)
+
+지원되지 않는 아키텍처 또는 glibc 2.35 미만 Linux에서는 소스 빌드를 선택할 수 있습니다.
 
 ```sh
 git clone https://github.com/xxvw/localjev-grep.git

@@ -1,0 +1,36 @@
+{
+  "name": "jgrep-agent",
+  "version": "0.1.1",
+  "description": "Guide coding agents to locate code with compact jgrep searches.",
+  "author": {
+    "name": "xxvw",
+    "url": "https://github.com/xxvw"
+  },
+  "homepage": "https://github.com/xxvw/localjev-grep/tree/main/plugins/jgrep-agent",
+  "repository": "https://github.com/xxvw/localjev-grep",
+  "license": "GPL-3.0-or-later",
+  "keywords": [
+    "jgrep",
+    "code-search",
+    "coding-agents",
+    "semantic-search"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "jgrep Agent",
+    "shortDescription": "Locate code with compact local jgrep searches.",
+    "longDescription": "Guidance for coding agents to use jgrep --ai, inspect only cited ranges, and avoid loading a model for exact searches.",
+    "developerName": "xxvw",
+    "category": "Productivity",
+    "capabilities": [
+      "Local code search",
+      "Reusable instructions"
+    ],
+    "defaultPrompt": [
+      "Find the code path that handles a rejected login.",
+      "Locate the exact identifier parse_request without loading the model.",
+      "Search this repository efficiently with jgrep."
+    ],
+    "brandColor": "#1F6FEB"
+  }
+}

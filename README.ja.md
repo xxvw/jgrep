@@ -13,13 +13,80 @@ llama.cpp とは提携・承認・配布関係にありません。完全な仕�
 
 ## インストール
 
-macOS（Apple Silicon / Intel）、Windows x64、Linux x64（glibc 2.35 以降）の
-実行ファイルは [GitHub Releases](https://github.com/xxvw/localjev-grep/releases)
-から取得できます。展開したディレクトリの `jgrep`（Windows は `jgrep.exe`）を
-`PATH` に追加してください。
+`git clone` を使わず、次の一つのコマンドブロックを一度貼り付けるだけで
+インストールできます。バージョン固定のインストーラーバンドルをダウンロードし、
+展開前に SHA-256 を検証してからローカルの日本語ラッパーを実行します。macOS
+（Apple Silicon / Intel）、Windows x64、Linux x64（glibc 2.35 以降）に対応します。
+ダウンロード元と同じリリースから得るチェックサムは転送破損や取り違えを検出しますが、
+署名による発行元の証明ではありません。
+日本語ラッパーはローカライズされた開始メッセージを表示し、共有の検証済みコア
+インストーラーへ処理とすべての安全確認を委譲します。
+
+Bash / zsh に一度貼り付ける場合:
+
+```sh
+(
+  set -e
+  version=v0.1.1
+  archive="localjev-grep-installers-${version}.tar.gz"
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "$workdir"' EXIT
+  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive.sha256" "$base/$archive.sha256"
+  (cd "$workdir" && if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 -c "$archive.sha256"
+  else
+    sha256sum -c "$archive.sha256"
+  fi)
+  tar -xzf "$workdir/$archive" -C "$workdir"
+  bash "$workdir/localjev-grep-installers-${version}/installers/ja/install.sh" \
+    --version "$version"
+)
+```
+
+Windows PowerShell に一度貼り付ける場合:
+
+```powershell
+& {
+  $ErrorActionPreference = 'Stop'
+  $version = 'v0.1.1'
+  $archive = "localjev-grep-installers-$version.zip"
+  $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
+  New-Item -ItemType Directory -Path $workdir | Out-Null
+  try {
+    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
+    $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
+    $manifestPattern = '^[A-Fa-f0-9]{64}  ' + [regex]::Escape($archive) + '$'
+    if ($manifest -notmatch $manifestPattern) { throw 'installer bundle checksum manifest is invalid' }
+    $expected = $manifest.Substring(0, 64).ToLowerInvariant()
+    $actual = (Get-FileHash -LiteralPath (Join-Path $workdir $archive) -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actual -ne $expected) { throw 'installer bundle checksum mismatch' }
+    Expand-Archive -LiteralPath (Join-Path $workdir $archive) -DestinationPath $workdir -Force
+    & (Join-Path $workdir "localjev-grep-installers-$version\installers\ja\install.ps1") -Version $version
+  } finally {
+    Remove-Item -LiteralPath $workdir -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+```
+
+この手順は `curl | sh` や `Invoke-Expression` を使いません。インストール先などの
+オプションとオフライン用アセットの指定は、[インストールとコーディングエージェントの
+ガイド](docs/installation-and-agents.md) を参照してください。コーディングエージェント用の
+設定は [日本語の `jgrep-agent` プラグインガイド](plugins/jgrep-agent/README.ja.md) にあります。
+Unix の既定のインストール先は `$HOME/.local/bin` です。PowerShell では最後の
+`-Version $version` を `-Version $version -AddToPath` にすると、選択したインストール先を
+ユーザーの `PATH` に追加できます。
+
+### ソースからビルドする場合（任意）
 
 ソースからビルドする場合は、固定された Rust ツールチェーン、CMake、C++
-コンパイラが必要です。
+コンパイラが必要です。未対応アーキテクチャや glibc 2.35 未満の Linux では、
+ソースビルドを選べます。
 
 ```sh
 git clone https://github.com/xxvw/localjev-grep.git

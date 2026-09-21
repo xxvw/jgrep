@@ -15,13 +15,84 @@ en inglés.
 
 ## Instalación
 
-Los archivos nativos para macOS (Apple Silicon e Intel), Windows x64 y Linux
-x64 (glibc 2.35 o posterior) se publican en
-[GitHub Releases](https://github.com/xxvw/localjev-grep/releases). Descomprima
-el archivo y añada `jgrep` o `jgrep.exe` al `PATH`.
+Instale sin clonar el repositorio: copie y pegue por completo el bloque de su
+plataforma como un único comando. El bloque descarga el paquete de instalación
+fijado en `v0.1.1` y comprueba su SHA-256 antes de extraerlo. Luego ejecuta una
+envoltura con un mensaje inicial en español. Esa envoltura delega en el
+instalador central verificado, que selecciona y vuelve a verificar el archivo
+nativo para macOS (Apple Silicon e Intel), Windows x64 o Linux x64 (glibc 2.35
+o posterior).
 
-Para compilar desde el código fuente se necesitan la herramienta Rust fijada en
-`rust-toolchain.toml`, CMake y un compilador de C++ para llama.cpp incorporado:
+### macOS y Linux
+
+Copie y pegue este único comando compuesto en Bash o zsh:
+
+```sh
+(
+  set -e
+  version=v0.1.1
+  archive="localjev-grep-installers-${version}.tar.gz"
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "$workdir"' EXIT
+  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
+  curl --fail --silent --show-error --location --proto '=https' \
+    --proto-redir '=https' -o "$workdir/$archive.sha256" "$base/$archive.sha256"
+  (cd "$workdir" && if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 -c "$archive.sha256"
+  else
+    sha256sum -c "$archive.sha256"
+  fi)
+  tar -xzf "$workdir/$archive" -C "$workdir"
+  bash "$workdir/localjev-grep-installers-${version}/installers/es/install.sh" \
+    --version "$version"
+)
+```
+
+### Windows PowerShell
+
+Copie y pegue este único bloque de PowerShell:
+
+```powershell
+& {
+  $ErrorActionPreference = 'Stop'
+  $version = 'v0.1.1'
+  $archive = "localjev-grep-installers-$version.zip"
+  $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
+  New-Item -ItemType Directory -Path $workdir | Out-Null
+  try {
+    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
+    Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
+    $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
+    $manifestPattern = '^[A-Fa-f0-9]{64}  ' + [regex]::Escape($archive) + '$'
+    if ($manifest -notmatch $manifestPattern) { throw 'installer bundle checksum manifest is invalid' }
+    $expected = $manifest.Substring(0, 64).ToLowerInvariant()
+    $actual = (Get-FileHash -LiteralPath (Join-Path $workdir $archive) -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actual -ne $expected) { throw 'installer bundle checksum mismatch' }
+    Expand-Archive -LiteralPath (Join-Path $workdir $archive) -DestinationPath $workdir -Force
+    & (Join-Path $workdir "localjev-grep-installers-$version\installers\es\install.ps1") -Version $version
+  } finally {
+    Remove-Item -LiteralPath $workdir -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+```
+
+Estos comandos no usan `git clone`, `curl | sh` ni `Invoke-Expression`. En
+macOS/Linux, el destino predeterminado es `$HOME/.local/bin` (o
+`$XDG_BIN_HOME` si está definido); añádalo a `PATH` si es necesario. En
+PowerShell, agregue `-AddToPath` a la llamada final del instalador para añadir
+el directorio al `PATH` del usuario. Para opciones, instalaciones sin conexión
+y directorios de destino, consulte la
+[guía de instalación](docs/installation-and-agents.md). Para configurar un
+agente de programación, consulte la [guía del complemento de jgrep](plugins/jgrep-agent/README.es.md).
+
+### Compilación opcional desde el código fuente
+
+Para desarrollo, una arquitectura no admitida o Linux anterior, compile desde
+el código fuente con la herramienta Rust fijada en `rust-toolchain.toml`, CMake
+y un compilador de C++ para llama.cpp incorporado:
 
 ```sh
 git clone https://github.com/xxvw/localjev-grep.git

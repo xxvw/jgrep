@@ -28,7 +28,7 @@ Install a verified localjev-grep release archive for this macOS or Linux host.
 Without --version, the script resolves the latest published GitHub Release.
 
 Options:
-  --version <TAG>       Release tag (for example v0.1.0 or 0.1.0).
+  --version <TAG>       Release tag (for example v0.1.1 or 0.1.1).
   --install-dir <DIR>   Destination directory (default: $XDG_BIN_HOME or
                         $HOME/.local/bin).
   --asset-dir <DIR>     Read a release archive and checksum from DIR without

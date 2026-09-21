@@ -23,3 +23,7 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Python generator bytecode
+__pycache__/
+*.py[cod]

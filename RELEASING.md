@@ -24,12 +24,14 @@ already exists.
    x64, and Linux x64.
 2. Run the CLI smoke tests on every built target, covering file input and
    standard input.
-3. Run the pinned `cargo about generate` command from the release workflow and
-   `scripts/release/package.ps1`, or let the tag workflow run them, to create
-   archives containing the executable, `LICENSE`, notices, license inventory,
-   localized READMEs, and platform-appropriate usage notes.
-4. Produce SHA-256 checksums and independently verify each archive after
-   extraction.
+3. Run the pinned `cargo about generate` command and the release packagers, or
+   let the tag workflow run them, to create the native archives and the
+   versioned installer `.tar.gz`/`.zip` bundles. Verify that native archives
+   contain the localized wrappers, marketplace, plugin, licenses, and the
+   generated dependency inventory.
+4. Produce SHA-256 checksums and independently verify every native archive and
+   installer bundle after extraction. The installer bundles must preserve
+   hidden `.agents/plugins/marketplace.json` in both archive formats.
 5. Do not describe model quality, benchmark results, signing, or notarization
    as available unless the corresponding evidence or artifact is published.
 
@@ -42,8 +44,9 @@ already exists.
    automatically create the GitHub Release from those verified assets.
 4. After publication, inspect the release notes, compatibility requirements,
    known limitations, and installation instructions against the actual assets.
-5. Verify the release page, source archive, and one clean
-   installation per supported platform.
+5. Verify the release page, source archive, installer-bundle checksums, and
+   one clean installation per supported platform. Exercise a localized wrapper
+   from the extracted bundle before referring users to its one-paste command.
 
 If remote CI or artifact verification fails, fix the release candidate and
 repeat verification with a new tag as appropriate; do not publish a known-bad

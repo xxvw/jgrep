@@ -12,8 +12,9 @@ confidence. A fresh inference state is used for each evaluation so prior lines
 cannot affect a later decision.
 
 With `--score`, a selected ordinary output record starts with a value such as
-`score=0.743 ` before the original line. This display value is still the same
-uncalibrated relevance score. `--offline` and `--download-model` conflict.
+`score=0.743`, followed by a space and the original line. This display value
+is still the same uncalibrated relevance score. `--offline` and
+`--download-model` conflict.
 
 Semantic mode is intentionally conservative about unsupported combinations:
 

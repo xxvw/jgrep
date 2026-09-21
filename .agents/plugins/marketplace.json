@@ -1,0 +1,20 @@
+{
+  "name": "localjev-grep",
+  "interface": {
+    "displayName": "Localjev Grep"
+  },
+  "plugins": [
+    {
+      "name": "jgrep-agent",
+      "source": {
+        "source": "local",
+        "path": "./plugins/jgrep-agent"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
