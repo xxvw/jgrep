@@ -240,7 +240,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "installer did not produce a runnable jgrep" }
 
       - name: Upload checked release asset
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.target }}
           path: |
@@ -370,7 +370,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "bundled localized Bash installer failed" }
 
       - name: Upload checked installer bundles
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-installers
           path: |
