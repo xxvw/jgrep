@@ -79,7 +79,13 @@ def shell_quote(value: str) -> str:
 def powershell_quote(value: str) -> str:
     """Return a PowerShell single-quoted string without allowing template injection."""
 
-    return "'" + value.replace("'", "''") + "'"
+    # PowerShell treats several typographic single quotation marks as string
+    # delimiters too. Normalize them before applying its doubled-apostrophe
+    # escape, otherwise French and similar messages can become invalid code.
+    normalized = value.translate(
+        str.maketrans({"\u2018": "'", "\u2019": "'", "\u201a": "'", "\u201b": "'"})
+    )
+    return "'" + normalized.replace("'", "''") + "'"
 
 
 def render_shell(locale: str, start_message: str, root_error: str) -> bytes:

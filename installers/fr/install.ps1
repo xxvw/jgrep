@@ -23,8 +23,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$StartMessage = 'Démarrage du programme d’installation de localjev-grep…'
-$RootError = 'Le programme d’installation commun est introuvable. Exécutez ce script depuis le paquet d’installation localjev-grep vérifié.'
+$StartMessage = 'Démarrage du programme d''installation de localjev-grep…'
+$RootError = 'Le programme d''installation commun est introuvable. Exécutez ce script depuis le paquet d''installation localjev-grep vérifié.'
 
 if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
     throw $RootError
