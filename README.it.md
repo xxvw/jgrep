@@ -22,6 +22,10 @@ centrale condiviso e verificato, che seleziona e verifica nuovamente l’archivi
 nativo per macOS (Apple Silicon e Intel), Windows x64 o Linux x64 (glibc 2.35
 o successiva).
 
+La versione `v0.1.1` precede la rinomina del repository; perciò i nomi
+immutabili dell’archivio e della directory dell’installer iniziano ancora con
+`localjev-grep`. Gli URL del repository, il sorgente attuale e il comando usano `jgrep`.
+
 ### macOS e Linux
 
 Incollare integralmente questo singolo comando composto in Bash o zsh:
@@ -192,6 +196,21 @@ Usare `--` prima di un contesto o percorso che inizia con `-`. Le opzioni
 semantiche, come `--threshold` e `--score`, sono rifiutate nei modi
 lessicali. `-m 0`, input vuoto, guida e ricerche lessicali non inizializzano
 il modello.
+
+## Benchmark dei token Codex
+
+In un benchmark controllato di tre attività di localizzazione del codice,
+`jgrep --ai -F` ha usato **il 16,4% di token Codex totali in meno** rispetto a
+`rg -F`. I token di input non memorizzati nella cache sono diminuiti del 54,9%
+e l’output dello strumento di ricerca del 97,1%. È una singola ripetizione, non
+una garanzia generale. Le posizioni coincidevano in due attività; nell’attività
+più ampia, la risposta Codex del ramo `rg` ha saltato una posizione presente
+nell’output grezzo dello strumento.
+
+Consultare [metodologia e limiti](benchmark/README.md),
+[riepilogo dei risultati](benchmark/RESULTS-2026-09-22.md),
+[dati delle singole esecuzioni](benchmark/results/2026-09-22.json) e
+[log di esecuzione grezzi](benchmark/logs/2026-09-22/README.md).
 
 ## Limiti e compatibilità
 

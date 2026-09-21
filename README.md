@@ -96,6 +96,10 @@ extracting it, and then runs a local installer. The guide also has one-paste
 commands for every supported README language, offline asset installation, and
 coding-agent setup.
 
+The `v0.1.1` release predates the repository rename, so its immutable archive
+and installer directory names still begin with `localjev-grep`. Repository
+URLs, source builds, and the installed command use `jgrep`.
+
 To build from source:
 
 ```sh
@@ -241,18 +245,22 @@ installer and template usage.
 ## Codex token benchmark
 
 On a controlled three-task location-search benchmark, `jgrep --ai -F` used
-**24.9% fewer total Codex tokens** than `rg -F` while returning the same first
-five locations in every task. Search-tool output was 97.3% smaller.
+**16.4% fewer total Codex tokens** than `rg -F`. Non-cached input tokens were
+54.9% lower, and search-tool output was 97.1% smaller.
 
 | Search tool | Total tokens | Non-cached input tokens | Tool output |
 | --- | ---: | ---: | ---: |
-| `rg` | 92,632 | 33,892 | 99,281 characters |
-| `jgrep --ai` | 69,602 | 8,947 | 2,703 characters |
+| `rg` | 91,278 | 34,703 | 95,421 characters |
+| `jgrep --ai` | 76,334 | 15,662 | 2,739 characters |
 
 This is a one-repetition fixed-string microbenchmark, not a general performance
-or accuracy guarantee. See the [methodology and limitations](benchmark/README.md),
-the [result summary](benchmark/RESULTS-2026-09-21.md), and the
-[per-run data](benchmark/results/2026-09-21.json).
+or accuracy guarantee. The location lists agreed for two tasks; in the broad
+project-name task, the `rg`-arm Codex response skipped one location that was
+present in its raw tool output. See the
+[methodology and limitations](benchmark/README.md), the
+[result summary](benchmark/RESULTS-2026-09-22.md), the
+[per-run data](benchmark/results/2026-09-22.json), and the
+[raw execution logs](benchmark/logs/2026-09-22/README.md).
 
 ## Model, privacy, and scores
 

@@ -22,6 +22,10 @@ délègue à l’installateur central commun vérifié, qui choisit et vérifie 
 nouveau l’archive native adaptée à macOS (Apple Silicon et Intel), Windows x64
 ou Linux x64 (glibc 2.35 ou ultérieure).
 
+La version `v0.1.1` précède le renommage du dépôt. Ses noms immuables d’archive
+et de répertoire d’installation commencent donc encore par `localjev-grep` ;
+les URL du dépôt, le code actuel et la commande utilisent `jgrep`.
+
 ### macOS et Linux
 
 Collez intégralement cette unique commande composée dans Bash ou zsh :
@@ -194,6 +198,21 @@ Utilisez `--` avant un contexte ou un chemin qui commence par `-`. Les
 options propres à la sémantique, dont `--threshold` et `--score`, sont
 refusées dans les modes lexicaux. `-m 0`, l’entrée vide, l’aide et les
 recherches lexicales n’initialisent pas le modèle.
+
+## Benchmark de jetons Codex
+
+Dans un benchmark contrôlé de trois tâches de localisation de code,
+`jgrep --ai -F` a consommé **16,4 % de jetons Codex en moins** que `rg -F`.
+Les jetons d’entrée non mis en cache ont diminué de 54,9 % et la sortie de
+l’outil de recherche de 97,1 %. Il s’agit d’une seule répétition, et non d’une
+garantie générale. Les emplacements concordaient pour deux tâches ; dans la
+tâche la plus large, la réponse Codex du bras `rg` a omis un emplacement
+présent dans la sortie brute de l’outil.
+
+Voir la [méthode et ses limites](benchmark/README.md), le
+[résumé des résultats](benchmark/RESULTS-2026-09-22.md), les
+[données de chaque exécution](benchmark/results/2026-09-22.json) et les
+[journaux d’exécution bruts](benchmark/logs/2026-09-22/README.md).
 
 ## Limites et compatibilité
 

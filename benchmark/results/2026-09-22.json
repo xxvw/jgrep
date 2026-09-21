@@ -1,0 +1,164 @@
+{
+  "generated_at": "2026-09-21T18:38:21Z",
+  "source_commit": "a5ed20a50de22fdf60f9756853dcf80f847aacab",
+  "codex_version": "codex-cli 0.154.0",
+  "jgrep_version": "jgrep 0.1.1",
+  "model": "gpt-5.6-luna",
+  "reasoning_effort": "low",
+  "repetitions": 1,
+  "runs": [
+    {
+      "task": "repository-rename-audit",
+      "mode": "rg",
+      "repetition": 1,
+      "prompt": "Read-only benchmark: do not modify files. Run exactly one shell command: rg --hidden --sort path -n -F -g '!benchmark/**' -- NEEDLE . (replace NEEDLE with the shell-quoted supplied needle). Never run jgrep, grep, find, sed, ls, or any other command. Do not truncate or pipe the search output. The exact needle is: localjev-grep. Task: Report the first five distinct path:line matches from the search output, in output order. Add one short sentence describing what these matches have in common.",
+      "log_file": "benchmark/logs/2026-09-22/repository-rename-audit.rg.1.log",
+      "stderr_log_file": "benchmark/logs/2026-09-22/repository-rename-audit.rg.1.stderr.log",
+      "usage": {
+        "input_tokens": 31056,
+        "cached_input_tokens": 17920,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 241,
+        "reasoning_output_tokens": 78
+      },
+      "total_tokens": 31297,
+      "non_cached_input_tokens": 13136,
+      "tool_output_chars": 4868,
+      "commands": [
+        "/bin/zsh -lc \"rg --hidden --sort path -n -F -g '\"'!benchmark/**'\"' -- 'localjev-grep' .\""
+      ],
+      "answer": "./README.ar.md:21  \n./README.ar.md:35  \n./README.ar.md:48  \n./README.ar.md:62  \n./README.de.md:34  \n\nThey all reference `localjev-grep` installer archive or installation paths."
+    },
+    {
+      "task": "repository-rename-audit",
+      "mode": "jgrep",
+      "repetition": 1,
+      "prompt": "Read-only benchmark: do not modify files. Run exactly one shell command: jgrep --ai --ai-max-results 25 -r --exclude 'benchmark/**' -F -e NEEDLE . (replace NEEDLE with the shell-quoted supplied needle). Never run rg, grep, find, sed, ls, or any other command. Do not raise the result cap. The exact needle is: localjev-grep. Task: Report the first five distinct path:line matches from the search output, in output order. Add one short sentence describing what these matches have in common.",
+      "log_file": "benchmark/logs/2026-09-22/repository-rename-audit.jgrep.1.log",
+      "stderr_log_file": "benchmark/logs/2026-09-22/repository-rename-audit.jgrep.1.stderr.log",
+      "usage": {
+        "input_tokens": 22720,
+        "cached_input_tokens": 18944,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 219,
+        "reasoning_output_tokens": 46
+      },
+      "total_tokens": 22939,
+      "non_cached_input_tokens": 3776,
+      "tool_output_chars": 700,
+      "commands": [
+        "/bin/zsh -lc \"jgrep --ai --ai-max-results 25 -r --exclude 'benchmark/**' -F -e 'localjev-grep' .\""
+      ],
+      "answer": "- `./README.ar.md:21`\n- `./README.ar.md:35`\n- `./README.ar.md:48`\n- `./README.ar.md:62`\n- `./README.de.md:34`\n\nAll matches are occurrences in localized README files."
+    },
+    {
+      "task": "project-name-locations",
+      "mode": "rg",
+      "repetition": 1,
+      "prompt": "Read-only benchmark: do not modify files. Run exactly one shell command: rg --hidden --sort path -n -F -g '!benchmark/**' -- NEEDLE . (replace NEEDLE with the shell-quoted supplied needle). Never run jgrep, grep, find, sed, ls, or any other command. Do not truncate or pipe the search output. The exact needle is: jgrep. Task: Report the first five distinct path:line matches from the search output, in output order. Add one short sentence describing what these matches have in common.",
+      "log_file": "benchmark/logs/2026-09-22/project-name-locations.rg.1.log",
+      "stderr_log_file": "benchmark/logs/2026-09-22/project-name-locations.rg.1.stderr.log",
+      "usage": {
+        "input_tokens": 33698,
+        "cached_input_tokens": 19968,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 288,
+        "reasoning_output_tokens": 84
+      },
+      "total_tokens": 33986,
+      "non_cached_input_tokens": 13730,
+      "tool_output_chars": 78227,
+      "commands": [
+        "/bin/zsh -lc \"rg --hidden --sort path -n -F -g '\"'!benchmark/**'\"' -- 'jgrep' .\""
+      ],
+      "answer": "1. `./.agents/plugins/marketplace.json:2`\n2. `./.agents/plugins/marketplace.json:4`\n3. `./.agents/plugins/marketplace.json:8`\n4. `./.github/ISSUE_TEMPLATE/bug_report.yml:2`\n5. `./.github/ISSUE_TEMPLATE/bug_report.yml:15`\n\nThese matches all reference the `jgrep` project or command in configuration and documentation files."
+    },
+    {
+      "task": "project-name-locations",
+      "mode": "jgrep",
+      "repetition": 1,
+      "prompt": "Read-only benchmark: do not modify files. Run exactly one shell command: jgrep --ai --ai-max-results 25 -r --exclude 'benchmark/**' -F -e NEEDLE . (replace NEEDLE with the shell-quoted supplied needle). Never run rg, grep, find, sed, ls, or any other command. Do not raise the result cap. The exact needle is: jgrep. Task: Report the first five distinct path:line matches from the search output, in output order. Add one short sentence describing what these matches have in common.",
+      "log_file": "benchmark/logs/2026-09-22/project-name-locations.jgrep.1.log",
+      "stderr_log_file": "benchmark/logs/2026-09-22/project-name-locations.jgrep.1.stderr.log",
+      "usage": {
+        "input_tokens": 29907,
+        "cached_input_tokens": 23040,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 259,
+        "reasoning_output_tokens": 61
+      },
+      "total_tokens": 30166,
+      "non_cached_input_tokens": 6867,
+      "tool_output_chars": 1150,
+      "commands": [
+        "/bin/zsh -lc \"jgrep --ai --ai-max-results 25 -r --exclude 'benchmark/**' -F -e 'jgrep' .\""
+      ],
+      "answer": "- `./.agents/plugins/marketplace.json:2`\n- `./.agents/plugins/marketplace.json:4`\n- `./.agents/plugins/marketplace.json:8`\n- `./.agents/plugins/marketplace.json:11`\n- `./.github/ISSUE_TEMPLATE/bug_report.yml:2`\n\nAll five are text-file locations containing the exact needle `jgrep`."
+    },
+    {
+      "task": "semantic-feature-locations",
+      "mode": "rg",
+      "repetition": 1,
+      "prompt": "Read-only benchmark: do not modify files. Run exactly one shell command: rg --hidden --sort path -n -F -g '!benchmark/**' -- NEEDLE . (replace NEEDLE with the shell-quoted supplied needle). Never run jgrep, grep, find, sed, ls, or any other command. Do not truncate or pipe the search output. The exact needle is: semantic. Task: Report the first five distinct path:line matches from the search output, in output order. Add one short sentence describing what these matches have in common.",
+      "log_file": "benchmark/logs/2026-09-22/semantic-feature-locations.rg.1.log",
+      "stderr_log_file": "benchmark/logs/2026-09-22/semantic-feature-locations.rg.1.stderr.log",
+      "usage": {
+        "input_tokens": 25757,
+        "cached_input_tokens": 17920,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 238,
+        "reasoning_output_tokens": 56
+      },
+      "total_tokens": 25995,
+      "non_cached_input_tokens": 7837,
+      "tool_output_chars": 12326,
+      "commands": [
+        "/bin/zsh -lc \"rg --hidden --sort path -n -F -g '\"'!benchmark/**'\"' -- 'semantic' .\""
+      ],
+      "answer": "- `./.github/workflows/ci.yml:13`\n- `./.github/workflows/ci.yml:14`\n- `./.github/workflows/ci.yml:127`\n- `./.github/workflows/ci.yml:128`\n- `./.github/workflows/ci.yml:136`\n\nThey all reference semantic smoke testing or semantic matching in the CI workflow."
+    },
+    {
+      "task": "semantic-feature-locations",
+      "mode": "jgrep",
+      "repetition": 1,
+      "prompt": "Read-only benchmark: do not modify files. Run exactly one shell command: jgrep --ai --ai-max-results 25 -r --exclude 'benchmark/**' -F -e NEEDLE . (replace NEEDLE with the shell-quoted supplied needle). Never run rg, grep, find, sed, ls, or any other command. Do not raise the result cap. The exact needle is: semantic. Task: Report the first five distinct path:line matches from the search output, in output order. Add one short sentence describing what these matches have in common.",
+      "log_file": "benchmark/logs/2026-09-22/semantic-feature-locations.jgrep.1.log",
+      "stderr_log_file": "benchmark/logs/2026-09-22/semantic-feature-locations.jgrep.1.stderr.log",
+      "usage": {
+        "input_tokens": 22939,
+        "cached_input_tokens": 17920,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 290,
+        "reasoning_output_tokens": 133
+      },
+      "total_tokens": 23229,
+      "non_cached_input_tokens": 5019,
+      "tool_output_chars": 889,
+      "commands": [
+        "/bin/zsh -lc \"jgrep --ai --ai-max-results 25 -r --exclude 'benchmark/**' -F -e 'semantic' .\""
+      ],
+      "answer": "./.github/workflows/ci.yml:13  \n./.github/workflows/ci.yml:14  \n./.github/workflows/ci.yml:127  \n./.github/workflows/ci.yml:128  \n./.github/workflows/ci.yml:136  \n\nAll five matches are in the GitHub Actions CI workflow."
+    }
+  ],
+  "aggregate": {
+    "rg": {
+      "total_tokens": 91278,
+      "input_tokens": 90511,
+      "cached_input_tokens": 55808,
+      "output_tokens": 767,
+      "non_cached_input_tokens": 34703,
+      "tool_output_chars": 95421
+    },
+    "jgrep": {
+      "total_tokens": 76334,
+      "input_tokens": 75566,
+      "cached_input_tokens": 59904,
+      "output_tokens": 768,
+      "non_cached_input_tokens": 15662,
+      "tool_output_chars": 2739
+    },
+    "total_token_reduction_percent": 16.37196257586713,
+    "non_cached_input_token_reduction_percent": 54.86845517678587,
+    "tool_output_char_reduction_percent": 97.12956267488289
+  }
+}

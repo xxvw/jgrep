@@ -23,6 +23,10 @@ delegiert an den gemeinsamen geprüften Kerninstaller, der das passende native
 Archiv für macOS (Apple Silicon und Intel), Windows x64 oder Linux x64 (glibc
 2.35 oder neuer) auswählt und erneut prüft.
 
+Das Release `v0.1.1` ist älter als die Umbenennung des Repositorys. Deshalb
+beginnen seine unveränderlichen Archiv- und Installerverzeichnisnamen weiterhin
+mit `localjev-grep`; Repository-URLs, aktueller Quellcode und Befehl heißen `jgrep`.
+
 ### macOS und Linux
 
 Diesen einzelnen zusammengesetzten Befehl vollständig in Bash oder zsh einfügen:
@@ -195,6 +199,21 @@ kann der Agent nur die benötigten engen Bereiche abrufen.
 Optionen wie `--threshold` und `--score` werden in den lexikalischen Modi
 abgewiesen. `-m 0`, leere Eingaben, Hilfe und lexikalische Suchen initialisieren
 kein Modell.
+
+## Codex-Token-Benchmark
+
+In einem kontrollierten Benchmark mit drei Aufgaben zur Suche nach
+Codepositionen verbrauchte `jgrep --ai -F` **16,4 % weniger Codex-Gesamttoken**
+als `rg -F`. Nicht zwischengespeicherte Eingabetoken sanken um 54,9 %, die
+Ausgabe des Suchwerkzeugs um 97,1 %. Dies ist ein einzelner Durchlauf und keine
+allgemeine Garantie. Bei zwei Aufgaben stimmten die Positionen überein; bei der
+breiten Aufgabe übersprang die Codex-Antwort im `rg`-Arm eine Position, die in
+der unveränderten Werkzeugausgabe vorhanden war.
+
+Siehe [Methodik und Einschränkungen](benchmark/README.md),
+[Ergebnisübersicht](benchmark/RESULTS-2026-09-22.md),
+[Daten der einzelnen Läufe](benchmark/results/2026-09-22.json) und
+[unveränderte Ausführungsprotokolle](benchmark/logs/2026-09-22/README.md).
 
 ## Grenzen und Kompatibilität
 

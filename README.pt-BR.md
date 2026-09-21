@@ -22,6 +22,10 @@ verificado, que seleciona e verifica novamente o arquivo nativo adequado para
 macOS (Apple Silicon e Intel), Windows x64 ou Linux x64 (glibc 2.35 ou mais
 recente).
 
+A versão `v0.1.1` é anterior à renomeação do repositório; por isso, os nomes
+imutáveis do arquivo e do diretório do instalador ainda começam com
+`localjev-grep`. As URLs do repositório, o código atual e o comando usam `jgrep`.
+
 ### macOS e Linux
 
 Cole integralmente este único comando composto no Bash ou zsh:
@@ -191,6 +195,20 @@ no máximo 50 locais em toda a execução; ajuste o limite com
 `--ai-max-results`. Em seguida, o agente de programação pode buscar somente
 os intervalos estreitos de linhas necessários, reduzindo o uso de tokens em
 chamadas de ferramentas.
+
+## Benchmark de tokens do Codex
+
+Em um benchmark controlado de três tarefas de localização de código,
+`jgrep --ai -F` usou **16,4% menos tokens totais do Codex** que `rg -F`.
+Os tokens de entrada não armazenados em cache caíram 54,9%, e a saída da
+ferramenta de busca caiu 97,1%. É uma única repetição, não uma garantia geral.
+As localizações coincidiram em duas tarefas; na tarefa mais ampla, a resposta
+do Codex no braço `rg` ignorou uma localização presente na saída bruta da ferramenta.
+
+Consulte a [metodologia e as limitações](benchmark/README.md), o
+[resumo dos resultados](benchmark/RESULTS-2026-09-22.md), os
+[dados por execução](benchmark/results/2026-09-22.json) e os
+[logs brutos de execução](benchmark/logs/2026-09-22/README.md).
 
 ## Limites e compatibilidade
 
