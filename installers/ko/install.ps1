@@ -32,12 +32,17 @@ if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
 
 try {
     $wrapperDirectory = (Resolve-Path -LiteralPath $PSScriptRoot -ErrorAction Stop).Path
-    $installerDirectory = Split-Path -LiteralPath $wrapperDirectory -Parent
-    $repositoryRoot = Split-Path -LiteralPath $installerDirectory -Parent
-    if ([string]::IsNullOrWhiteSpace($repositoryRoot)) {
+    # Split-Path cannot combine -LiteralPath and -Parent in Windows
+    # PowerShell. Directory.GetParent retains literal-path semantics here.
+    $installerDirectory = [System.IO.Directory]::GetParent($wrapperDirectory)
+    if ($null -eq $installerDirectory) {
         throw "installer bundle root is unavailable"
     }
-    $repositoryRoot = (Resolve-Path -LiteralPath $repositoryRoot -ErrorAction Stop).Path
+    $repositoryRoot = [System.IO.Directory]::GetParent($installerDirectory.FullName)
+    if ($null -eq $repositoryRoot) {
+        throw "installer bundle root is unavailable"
+    }
+    $repositoryRoot = (Resolve-Path -LiteralPath $repositoryRoot.FullName -ErrorAction Stop).Path
 }
 catch {
     throw "$RootError $($_.Exception.Message)"

@@ -85,6 +85,7 @@ for wrapper in "${bash_wrapper_files[@]}"; do
 done
 for wrapper in "${powershell_wrapper_files[@]}"; do
     require_text "$wrapper" "scripts/install.ps1"
+    require_text "$wrapper" "[System.IO.Directory]::GetParent"
     # shellcheck disable=SC2016 # Match the literal generated wrapper source.
     require_text "$wrapper" '& $coreInstaller @PSBoundParameters'
 done
