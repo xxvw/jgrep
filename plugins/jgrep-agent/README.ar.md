@@ -10,11 +10,11 @@
 الإضافة:
 
 ```sh
-codex plugin marketplace add xxvw/localjev-grep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@localjev-grep
+codex plugin marketplace add xxvw/jgrep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@jgrep
 ```
 
 ابدأ جلسة Codex جديدة لتحميل الإضافة. ثبّت `jgrep` باتباع
-[ملف README الرئيسي](https://github.com/xxvw/localjev-grep/blob/main/README.md) و[دليل التثبيت ودمج الوكلاء](https://github.com/xxvw/localjev-grep/blob/main/docs/installation-and-agents.md).
+[ملف README الرئيسي](https://github.com/xxvw/jgrep/blob/main/README.md) و[دليل التثبيت ودمج الوكلاء](https://github.com/xxvw/jgrep/blob/main/docs/installation-and-agents.md).
 
 ## بحث مختصر للوكلاء
 

@@ -1,4 +1,4 @@
-# Contributing to localjev-grep
+# Contributing to jgrep
 
 Thanks for helping improve `jgrep`, the local semantic-search CLI in this
 repository. By contributing, you agree to follow the

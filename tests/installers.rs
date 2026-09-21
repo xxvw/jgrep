@@ -318,7 +318,7 @@ fn localized_unix_installers_delegate_to_the_core_installer() {
         );
         assert_success(&output, &format!("localized Unix installer ({locale})"));
         assert!(
-            String::from_utf8_lossy(&output.stderr).contains("localjev-grep"),
+            String::from_utf8_lossy(&output.stderr).contains("jgrep"),
             "localized Unix wrapper ({locale}) did not emit its start message: {output:?}"
         );
         assert!(
@@ -486,7 +486,7 @@ fn windows_installer_verifies_and_installs_a_local_release_archive() {
 
     let mismatched_version = "v9.9.9";
     let mismatched_asset_directory = temp.path().join("mismatched-assets");
-    let mismatched_package_root = format!("localjev-grep-{mismatched_version}-{target}");
+    let mismatched_package_root = format!("jgrep-{mismatched_version}-{target}");
     let mismatched_stage = mismatched_asset_directory.join(&mismatched_package_root);
     fs::create_dir_all(&mismatched_stage).expect("create mismatched release staging directory");
     fs::copy(jgrep_binary(), mismatched_stage.join("jgrep.exe"))

@@ -7,8 +7,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-readonly START_MESSAGE='正在启动 localjev-grep 安装程序…'
-readonly ROOT_ERROR='未找到通用安装程序。请在已验证的 localjev-grep 安装程序包中运行此脚本。'
+readonly START_MESSAGE='正在启动 jgrep 安装程序…'
+readonly ROOT_ERROR='未找到通用安装程序。请在已验证的 jgrep 安装程序包中运行此脚本。'
 
 wrapper_directory="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 installer_directory="$(cd -P -- "${wrapper_directory}/.." && pwd)"

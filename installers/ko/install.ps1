@@ -23,8 +23,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$StartMessage = 'localjev-grep 설치 프로그램을 시작합니다…'
-$RootError = '공통 설치 프로그램을 찾을 수 없습니다. 검증된 localjev-grep 설치 프로그램 번들에서 이 스크립트를 실행하세요.'
+$StartMessage = 'jgrep 설치 프로그램을 시작합니다…'
+$RootError = '공통 설치 프로그램을 찾을 수 없습니다. 검증된 jgrep 설치 프로그램 번들에서 이 스크립트를 실행하세요.'
 
 if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
     throw $RootError

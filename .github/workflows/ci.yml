@@ -97,7 +97,7 @@ jobs:
         shell: pwsh
         env:
           TARGET: ${{ matrix.target }}
-        run: cargo build --locked --release --package localjev-grep --target $env:TARGET
+        run: cargo build --locked --release --package jgrep --target $env:TARGET
 
       - name: Smoke-test fixed, regex, and stdin behavior without a model
         shell: pwsh
@@ -176,7 +176,7 @@ jobs:
         shell: pwsh
         env:
           TARGET: ${{ matrix.target }}
-        run: cargo build --locked --release --package localjev-grep --target $env:TARGET
+        run: cargo build --locked --release --package jgrep --target $env:TARGET
 
       - name: Download, validate, and exercise positive and negative real-model fixtures
         shell: pwsh

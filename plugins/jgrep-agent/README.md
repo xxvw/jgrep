@@ -1,13 +1,13 @@
 # jgrep Agent
 
 `jgrep-agent` is a skills-only Agent Plugin for Codex. It teaches coding
-agents to use [`jgrep`](https://github.com/xxvw/localjev-grep)'s compact
+agents to use [`jgrep`](https://github.com/xxvw/jgrep)'s compact
 `--ai` mode to find code locations, then inspect only the source ranges that
 matter. It adds no network service, background process, or model of its own.
 
 Use the current `jgrep` installer before enabling the plugin so that `jgrep`
 is available on the coding environment's `PATH`. See the
-[installation and agent integration guide](https://github.com/xxvw/localjev-grep/blob/main/docs/installation-and-agents.md).
+[installation and agent integration guide](https://github.com/xxvw/jgrep/blob/main/docs/installation-and-agents.md).
 
 ## Install in Codex
 
@@ -15,11 +15,11 @@ This command registers the repository marketplace, installs the plugin, and
 does not require cloning the repository:
 
 ```sh
-codex plugin marketplace add xxvw/localjev-grep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@localjev-grep
+codex plugin marketplace add xxvw/jgrep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@jgrep
 ```
 
 Start a new Codex session after installation so the skill is available. In the
-ChatGPT desktop app, select the `localjev-grep` marketplace in the Plugins
+ChatGPT desktop app, select the `jgrep` marketplace in the Plugins
 Directory and install `jgrep-agent`.
 
 ## What the skill changes
@@ -77,5 +77,5 @@ and `--color=always`. The full rules are in
 
 ## License
 
-This plugin is part of localjev-grep and is licensed under
-[GPL-3.0-or-later](https://github.com/xxvw/localjev-grep/blob/main/LICENSE).
+This plugin is part of jgrep and is licensed under
+[GPL-3.0-or-later](https://github.com/xxvw/jgrep/blob/main/LICENSE).

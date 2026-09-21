@@ -2,7 +2,7 @@
 
 ## Our commitment
 
-We want participation in localjev-grep to be welcoming, professional, and
+We want participation in jgrep to be welcoming, professional, and
 free from harassment. This applies to project spaces, events, and other
 interactions that represent the project.
 

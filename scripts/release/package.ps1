@@ -81,7 +81,7 @@ $licensesInventory = (Resolve-Path -LiteralPath $ThirdPartyLicensesPath).Path
 
 $out = [System.IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force -Path $out | Out-Null
-$packageRoot = "localjev-grep-v$Version-$Target"
+$packageRoot = "jgrep-v$Version-$Target"
 $stage = Join-Path $out $packageRoot
 if (Test-Path -LiteralPath $stage) {
     Remove-Item -LiteralPath $stage -Recurse -Force
@@ -151,7 +151,7 @@ if ($Format -eq "tar.gz") {
 }
 
 $sourceNotice = @(
-    "localjev-grep source and build instructions"
+    "jgrep source and build instructions"
     ""
     "Corresponding source for this GPL-3.0-or-later binary is available at:"
     "https://github.com/$Repository/tree/$Ref"

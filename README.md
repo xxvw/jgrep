@@ -1,11 +1,20 @@
-# localjev-grep
+<p align="center">
+  <img src="assets/jgrep-logo.png" alt="jgrep" width="680">
+</p>
+
+<p align="center">
+  <a href="https://github.com/xxvw/jgrep/actions/workflows/ci.yml"><img src="https://github.com/xxvw/jgrep/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/xxvw/jgrep/releases/latest"><img src="https://img.shields.io/github/v/release/xxvw/jgrep" alt="Latest release"></a>
+  <a href="https://github.com/xxvw/jgrep/blob/main/LICENSE"><img src="https://img.shields.io/github/license/xxvw/jgrep" alt="License"></a>
+  <a href="https://github.com/xxvw/jgrep/releases"><img src="https://img.shields.io/github/downloads/xxvw/jgrep/total" alt="Downloads"></a>
+</p>
 
 `jgrep` is a local, semantic grep-style command. It prints input lines whose
 meaning matches a natural-language query, while preserving the familiar
 file-and-pipe workflow of `grep`.
 
 > **Status:** Versioned native archives are published through
-> [GitHub Releases](https://github.com/xxvw/localjev-grep/releases). This
+> [GitHub Releases](https://github.com/xxvw/jgrep/releases). This
 > project makes no benchmark or accuracy guarantees.
 
 ```sh
@@ -16,6 +25,25 @@ jgrep -e "timeout" -e "connection refused" a.log b.log
 jgrep -E 'ERROR|WARN' app.log
 jgrep -F 'connection refused' app.log
 ```
+
+## Quickstart for Codex
+
+Install the `jgrep` executable from [GitHub Releases](https://github.com/xxvw/jgrep/releases),
+then add this repository as a Codex plugin marketplace and install `jgrep-agent`:
+
+```sh
+codex plugin marketplace add xxvw/jgrep --ref main \
+  --sparse .agents/plugins --sparse plugins/jgrep-agent
+codex plugin add jgrep-agent@jgrep
+```
+
+Start a new Codex session so the plugin is loaded. It teaches Codex to use the
+compact `jgrep --ai` location protocol first and to read only the source ranges
+that matter. The executable and plugin are separate: the process running Codex
+must be able to find `jgrep` on `PATH`. See the
+[plugin guide](plugins/jgrep-agent/README.md) and OpenAI's
+[plugin documentation](https://developers.openai.com/plugins/build/plugins)
+for details.
 
 ## What it is
 
@@ -59,7 +87,7 @@ guides and may lag behind it.
 
 Download the archive for macOS on Apple Silicon or Intel, Windows x64, or Linux
 x64 (glibc 2.35 or later) from
-[GitHub Releases](https://github.com/xxvw/localjev-grep/releases).
+[GitHub Releases](https://github.com/xxvw/jgrep/releases).
 
 For a clone-free, version-pinned installation, copy the verified Bash/zsh or
 PowerShell command in [installation and agent integration](docs/installation-and-agents.md).
@@ -71,8 +99,8 @@ coding-agent setup.
 To build from source:
 
 ```sh
-git clone https://github.com/xxvw/localjev-grep.git
-cd localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+cd jgrep
 cargo build --release
 ./target/release/jgrep --help
 ```
@@ -80,8 +108,8 @@ cargo build --release
 Windows PowerShell:
 
 ```powershell
-git clone https://github.com/xxvw/localjev-grep.git
-Set-Location localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+Set-Location jgrep
 cargo build --release
 .\target\release\jgrep.exe --help
 ```
@@ -209,6 +237,22 @@ would hide, expand, or change the compact location protocol. `-H`, `-n`, and
 agent output never contains ANSI escapes. See
 [installation and agent integration](docs/installation-and-agents.md) for
 installer and template usage.
+
+## Codex token benchmark
+
+On a controlled three-task location-search benchmark, `jgrep --ai -F` used
+**24.9% fewer total Codex tokens** than `rg -F` while returning the same first
+five locations in every task. Search-tool output was 97.3% smaller.
+
+| Search tool | Total tokens | Non-cached input tokens | Tool output |
+| --- | ---: | ---: | ---: |
+| `rg` | 92,632 | 33,892 | 99,281 characters |
+| `jgrep --ai` | 69,602 | 8,947 | 2,703 characters |
+
+This is a one-repetition fixed-string microbenchmark, not a general performance
+or accuracy guarantee. See the [methodology and limitations](benchmark/README.md),
+the [result summary](benchmark/RESULTS-2026-09-21.md), and the
+[per-run data](benchmark/results/2026-09-21.json).
 
 ## Model, privacy, and scores
 

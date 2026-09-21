@@ -1,6 +1,6 @@
 # Installation and coding-agent integration
 
-`localjev-grep` publishes native, versioned release archives for macOS Apple
+`jgrep` publishes native, versioned release archives for macOS Apple
 Silicon, macOS Intel, Windows x64, and Linux x64. The installers select the
 matching archive, verify its SHA-256 manifest before using its executable,
 require its `jgrep --version` output to match the selected tag, and install
@@ -33,7 +33,7 @@ Paste this single compound command into Bash or zsh:
   archive="localjev-grep-installers-${version}.tar.gz"
   workdir="$(mktemp -d)"
   trap 'rm -rf "$workdir"' EXIT
-  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  base="https://github.com/xxvw/jgrep/releases/download/${version}"
   curl --fail --silent --show-error --location --proto '=https' \
     --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
   curl --fail --silent --show-error --location --proto '=https' \
@@ -61,7 +61,7 @@ Paste this single PowerShell command block:
   $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
   New-Item -ItemType Directory -Path $workdir | Out-Null
   try {
-    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    $base = "https://github.com/xxvw/jgrep/releases/download/$version"
     Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
     Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
     $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
@@ -91,8 +91,8 @@ only the matching native binary archive.
 From a reviewed checkout, run:
 
 ```sh
-git clone https://github.com/xxvw/localjev-grep.git
-cd localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+cd jgrep
 ./scripts/install.sh
 ```
 
@@ -149,8 +149,8 @@ than disabling platform security controls in an installer.
 From a reviewed checkout in PowerShell:
 
 ```powershell
-git clone https://github.com/xxvw/localjev-grep.git
-Set-Location localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+Set-Location jgrep
 .\scripts\install.ps1
 ```
 
@@ -215,7 +215,7 @@ search guidance. Install `jgrep` first, then register this repository's
 marketplace and plugin without cloning the repository:
 
 ```sh
-codex plugin marketplace add xxvw/localjev-grep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@localjev-grep
+codex plugin marketplace add xxvw/jgrep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@jgrep
 ```
 
 Start a new Codex session after installation. The plugin and its localized

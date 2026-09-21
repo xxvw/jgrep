@@ -69,7 +69,7 @@ fi
 # contract even on a host that cannot parse PowerShell.
 require_text "$bash_installer" "--asset-dir"
 require_text "$bash_installer" "SHA-256 verification failed"
-require_text "$bash_installer" "localjev-grep-\${tag}-\${target}"
+require_text "$bash_installer" "jgrep-\${tag}-\${target}"
 require_text "$bash_installer" "version mismatch"
 require_text "$powershell_installer" "-AssetDirectory"
 require_text "$powershell_installer" "Get-Sha256"

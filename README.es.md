@@ -1,4 +1,4 @@
-# localjev-grep
+# jgrep
 
 `jgrep` es un comando local de estilo `grep` para búsqueda semántica. Muestra
 las líneas cuyo significado coincide con una consulta en lenguaje natural y
@@ -34,7 +34,7 @@ Copie y pegue este único comando compuesto en Bash o zsh:
   archive="localjev-grep-installers-${version}.tar.gz"
   workdir="$(mktemp -d)"
   trap 'rm -rf "$workdir"' EXIT
-  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  base="https://github.com/xxvw/jgrep/releases/download/${version}"
   curl --fail --silent --show-error --location --proto '=https' \
     --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
   curl --fail --silent --show-error --location --proto '=https' \
@@ -62,7 +62,7 @@ Copie y pegue este único bloque de PowerShell:
   $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
   New-Item -ItemType Directory -Path $workdir | Out-Null
   try {
-    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    $base = "https://github.com/xxvw/jgrep/releases/download/$version"
     Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
     Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
     $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
@@ -95,8 +95,8 @@ el código fuente con la herramienta Rust fijada en `rust-toolchain.toml`, CMake
 y un compilador de C++ para llama.cpp incorporado:
 
 ```sh
-git clone https://github.com/xxvw/localjev-grep.git
-cd localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+cd jgrep
 cargo build --release
 ./target/release/jgrep --help
 ```
@@ -104,8 +104,8 @@ cargo build --release
 Windows PowerShell:
 
 ```powershell
-git clone https://github.com/xxvw/localjev-grep.git
-Set-Location localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+Set-Location jgrep
 cargo build --release
 .\target\release\jgrep.exe --help
 ```

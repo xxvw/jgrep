@@ -9,12 +9,12 @@ jgrep-agent предлагает агентам программирования
 В Codex добавьте локальный marketplace этого репозитория и установите плагин:
 
 ~~~sh
-codex plugin marketplace add xxvw/localjev-grep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@localjev-grep
+codex plugin marketplace add xxvw/jgrep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@jgrep
 ~~~
 
 После установки начните новую сессию Codex. Затем установите исполняемый файл
-jgrep по инструкциям в [основном README](https://github.com/xxvw/localjev-grep/blob/main/README.md) или в
-[руководстве по установке и агентам](https://github.com/xxvw/localjev-grep/blob/main/docs/installation-and-agents.md).
+jgrep по инструкциям в [основном README](https://github.com/xxvw/jgrep/blob/main/README.md) или в
+[руководстве по установке и агентам](https://github.com/xxvw/jgrep/blob/main/docs/installation-and-agents.md).
 
 ## Рабочий процесс агента
 

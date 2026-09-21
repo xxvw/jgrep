@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to localjev-grep will be documented in this file. The
+All notable changes to jgrep will be documented in this file. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 released versions will use [Semantic Versioning](https://semver.org/).
 

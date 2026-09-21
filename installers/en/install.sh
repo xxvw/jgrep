@@ -7,8 +7,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-readonly START_MESSAGE='Starting the localjev-grep installer…'
-readonly ROOT_ERROR='The common installer was not found. Run this script from the verified localjev-grep installer bundle.'
+readonly START_MESSAGE='Starting the jgrep installer…'
+readonly ROOT_ERROR='The common installer was not found. Run this script from the verified jgrep installer bundle.'
 
 wrapper_directory="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 installer_directory="$(cd -P -- "${wrapper_directory}/.." && pwd)"

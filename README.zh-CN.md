@@ -1,8 +1,8 @@
-# localjev-grep
+# jgrep
 
 `jgrep` 是一个本地运行的、用于语义搜索的 grep 风格命令。它根据自然语言上下文筛选输入行，同时保留 `grep` 熟悉的文件与管道工作方式。
 
-> **v0.1.1：** 可从 [GitHub Releases](https://github.com/xxvw/localjev-grep/releases) 下载带版本号的原生归档包。本项目不对基准测试结果、准确率、吞吐量或延迟作出保证。
+> **v0.1.1：** 可从 [GitHub Releases](https://github.com/xxvw/jgrep/releases) 下载带版本号的原生归档包。本项目不对基准测试结果、准确率、吞吐量或延迟作出保证。
 
 默认的语义模式使用本地的 [Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct) 模型，对每一行是否与上下文相关作二元判断。搜索内容不会发送给托管模型；不需要 Python、Ollama 或常驻服务。`-E` 为 Rust 正则表达式模式，`-F` 为固定字符串模式，两者均不会下载或加载模型。
 
@@ -27,7 +27,7 @@
   archive="localjev-grep-installers-${version}.tar.gz"
   workdir="$(mktemp -d)"
   trap 'rm -rf "$workdir"' EXIT
-  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  base="https://github.com/xxvw/jgrep/releases/download/${version}"
   curl --fail --silent --show-error --location --proto '=https' \
     --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
   curl --fail --silent --show-error --location --proto '=https' \
@@ -53,7 +53,7 @@
   $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
   New-Item -ItemType Directory -Path $workdir | Out-Null
   try {
-    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    $base = "https://github.com/xxvw/jgrep/releases/download/$version"
     Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
     Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
     $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
@@ -82,8 +82,8 @@
 对于不受支持的架构或 glibc 低于 2.35 的 Linux，可选择从源码构建。
 
 ```sh
-git clone https://github.com/xxvw/localjev-grep.git
-cd localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+cd jgrep
 cargo build --release
 ./target/release/jgrep --help
 ```
@@ -91,8 +91,8 @@ cargo build --release
 Windows PowerShell：
 
 ```powershell
-git clone https://github.com/xxvw/localjev-grep.git
-Set-Location localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+Set-Location jgrep
 cargo build --release
 .\target\release\jgrep.exe --help
 ```

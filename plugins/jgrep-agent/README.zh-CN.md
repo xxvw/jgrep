@@ -7,13 +7,13 @@
 
 先安装 `jgrep`，并确保运行代理的进程可以通过 `PATH` 调用它。支持的平台、单命令
 安装、手动安装和离线安装请参阅项目的
-[README](https://github.com/xxvw/localjev-grep/blob/main/README.md) 和
-[安装与代理集成指南](https://github.com/xxvw/localjev-grep/blob/main/docs/installation-and-agents.md)。
+[README](https://github.com/xxvw/jgrep/blob/main/README.md) 和
+[安装与代理集成指南](https://github.com/xxvw/jgrep/blob/main/docs/installation-and-agents.md)。
 
 然后将市场和插件加入 Codex，并启动新的 Codex 会话：
 
 ```sh
-codex plugin marketplace add xxvw/localjev-grep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@localjev-grep
+codex plugin marketplace add xxvw/jgrep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@jgrep
 ```
 
 启用插件的进程也必须在其 `PATH` 中包含 `jgrep` 的安装目录。

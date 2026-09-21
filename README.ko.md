@@ -1,8 +1,8 @@
-# localjev-grep
+# jgrep
 
 `jgrep`은 자연어 문맥과 의미가 맞는 입력 줄을 찾는 로컬 grep 스타일 CLI입니다. 기본 의미 검색에서는 로컬 Qwen 모델이 각 줄의 관련성을 Yes/No로 판정하고, 선택된 원본 줄을 출력합니다. `-E` 정규식과 `-F` 고정 문자열의 일반 검색도 제공합니다.
 
-> **v0.1.1:** macOS(Apple Silicon/Intel), Windows x64, Linux x64용 버전별 네이티브 아카이브는 [GitHub Releases](https://github.com/xxvw/localjev-grep/releases)에서 받을 수 있습니다. 정확도·처리량·지연 시간에 관한 벤치마크 보장은 제공하지 않습니다.
+> **v0.1.1:** macOS(Apple Silicon/Intel), Windows x64, Linux x64용 버전별 네이티브 아카이브는 [GitHub Releases](https://github.com/xxvw/jgrep/releases)에서 받을 수 있습니다. 정확도·처리량·지연 시간에 관한 벤치마크 보장은 제공하지 않습니다.
 
 `jgrep`은 Jev의 예/아니오 판정 상호작용 방식을 참고했을 뿐입니다. 이 프로젝트는 Jev, TypeSafe, Qwen, Hugging Face, llama.cpp와 제휴하거나 이들의 승인을 받은 적이 없으며, 이들 어느 하나의 배포판도 아닙니다. 자세한 기능 명세는 영어 정본 [README.md](README.md)를 따릅니다.
 
@@ -27,7 +27,7 @@ Bash / zsh에 한 번 전체를 붙여 넣으세요.
   archive="localjev-grep-installers-${version}.tar.gz"
   workdir="$(mktemp -d)"
   trap 'rm -rf "$workdir"' EXIT
-  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  base="https://github.com/xxvw/jgrep/releases/download/${version}"
   curl --fail --silent --show-error --location --proto '=https' \
     --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
   curl --fail --silent --show-error --location --proto '=https' \
@@ -53,7 +53,7 @@ Windows PowerShell에 한 번 전체를 붙여 넣으세요.
   $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
   New-Item -ItemType Directory -Path $workdir | Out-Null
   try {
-    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    $base = "https://github.com/xxvw/jgrep/releases/download/$version"
     Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
     Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
     $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
@@ -83,8 +83,8 @@ Unix의 기본 설치 경로는 `$HOME/.local/bin`입니다. PowerShell에서는
 지원되지 않는 아키텍처 또는 glibc 2.35 미만 Linux에서는 소스 빌드를 선택할 수 있습니다.
 
 ```sh
-git clone https://github.com/xxvw/localjev-grep.git
-cd localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+cd jgrep
 cargo build --release
 ./target/release/jgrep --help
 ```
@@ -92,8 +92,8 @@ cargo build --release
 Windows PowerShell:
 
 ```powershell
-git clone https://github.com/xxvw/localjev-grep.git
-Set-Location localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+Set-Location jgrep
 cargo build --release
 .\target\release\jgrep.exe --help
 ```

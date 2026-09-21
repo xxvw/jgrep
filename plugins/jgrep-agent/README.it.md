@@ -11,12 +11,12 @@ Da un terminale con il CLI di Codex disponibile, aggiungere il marketplace del
 progetto e installare il plug-in:
 
 ```sh
-codex plugin marketplace add xxvw/localjev-grep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@localjev-grep
+codex plugin marketplace add xxvw/jgrep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@jgrep
 ```
 
 Avviare una nuova sessione Codex per caricare il plug-in. Installare `jgrep`
-seguendo il [README principale](https://github.com/xxvw/localjev-grep/blob/main/README.md) e la
-[guida all’installazione e all’integrazione degli agenti](https://github.com/xxvw/localjev-grep/blob/main/docs/installation-and-agents.md).
+seguendo il [README principale](https://github.com/xxvw/jgrep/blob/main/README.md) e la
+[guida all’installazione e all’integrazione degli agenti](https://github.com/xxvw/jgrep/blob/main/docs/installation-and-agents.md).
 
 ## Ricerca compatta per agenti
 

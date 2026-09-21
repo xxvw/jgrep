@@ -8,15 +8,15 @@
 
 最初に、実行するエージェントの `PATH` から `jgrep` を呼び出せるようにします。
 対応 OS、1 コマンドインストール、手動・オフライン導入は、プロジェクトの
-[README](https://github.com/xxvw/localjev-grep/blob/main/README.md) と
-[インストールおよびエージェント統合ガイド](https://github.com/xxvw/localjev-grep/blob/main/docs/installation-and-agents.md)
+[README](https://github.com/xxvw/jgrep/blob/main/README.md) と
+[インストールおよびエージェント統合ガイド](https://github.com/xxvw/jgrep/blob/main/docs/installation-and-agents.md)
 を参照してください。
 
 次に、Codex へマーケットプレイスとプラグインを追加し、新しい Codex セッションを
 開始します。
 
 ```sh
-codex plugin marketplace add xxvw/localjev-grep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@localjev-grep
+codex plugin marketplace add xxvw/jgrep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@jgrep
 ```
 
 プラグインを有効にしたプロセスにも `jgrep` のインストール先が `PATH` として渡る

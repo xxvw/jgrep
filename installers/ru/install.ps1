@@ -23,8 +23,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$StartMessage = 'Запускается программа установки localjev-grep…'
-$RootError = 'Общий установщик не найден. Запустите этот скрипт из проверенного установочного пакета localjev-grep.'
+$StartMessage = 'Запускается программа установки jgrep…'
+$RootError = 'Общий установщик не найден. Запустите этот скрипт из проверенного установочного пакета jgrep.'
 
 if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
     throw $RootError

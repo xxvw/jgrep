@@ -6,8 +6,8 @@
     "name": "xxvw",
     "url": "https://github.com/xxvw"
   },
-  "homepage": "https://github.com/xxvw/localjev-grep/tree/main/plugins/jgrep-agent",
-  "repository": "https://github.com/xxvw/localjev-grep",
+  "homepage": "https://github.com/xxvw/jgrep/tree/main/plugins/jgrep-agent",
+  "repository": "https://github.com/xxvw/jgrep",
   "license": "GPL-3.0-or-later",
   "keywords": [
     "jgrep",
@@ -31,6 +31,7 @@
       "Locate the exact identifier parse_request without loading the model.",
       "Search this repository efficiently with jgrep."
     ],
-    "brandColor": "#1F6FEB"
+    "brandColor": "#13C7F3",
+    "logo": "./assets/logo.png"
   }
 }

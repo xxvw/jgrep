@@ -23,8 +23,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$StartMessage = 'localjev-grep のインストーラーを開始します…'
-$RootError = '共通インストーラーが見つかりません。検証済みの localjev-grep インストーラーバンドル内でこのスクリプトを実行してください。'
+$StartMessage = 'jgrep のインストーラーを開始します…'
+$RootError = '共通インストーラーが見つかりません。検証済みの jgrep インストーラーバンドル内でこのスクリプトを実行してください。'
 
 if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
     throw $RootError

@@ -49,7 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           tag_version="${GITHUB_REF_NAME#v}"
-          package_version="$(cargo metadata --locked --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "localjev-grep") | .version')"
+          package_version="$(cargo metadata --locked --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "jgrep") | .version')"
           test -n "$package_version"
           test "$tag_version" = "$package_version"
 
@@ -102,7 +102,7 @@ jobs:
           TARGET: ${{ matrix.target }}
         run: |
           cmake --version
-          cargo build --locked --release --package localjev-grep --target $env:TARGET
+          cargo build --locked --release --package jgrep --target $env:TARGET
 
       - name: Install the pinned license inventory generator
         shell: pwsh
@@ -148,7 +148,7 @@ jobs:
           EXECUTABLE_SUFFIX: ${{ matrix.executable_suffix }}
         run: |
           $version = $env:GITHUB_REF_NAME -replace '^v', ''
-          $packageRoot = "localjev-grep-v$version-$env:TARGET"
+          $packageRoot = "jgrep-v$version-$env:TARGET"
           $archive = "dist/$packageRoot.$env:ARCHIVE_FORMAT"
           $checksum = "$archive.sha256"
           if (-not (Test-Path -LiteralPath $archive)) { throw "missing archive: $archive" }
@@ -273,7 +273,7 @@ jobs:
         shell: pwsh
         run: |
           $version = $env:GITHUB_REF_NAME -replace '^v', ''
-          $bundleRoot = "localjev-grep-installers-v$version"
+          $bundleRoot = "jgrep-installers-v$version"
           $archives = @(
             "dist/$bundleRoot.tar.gz",
             "dist/$bundleRoot.zip"
@@ -374,9 +374,9 @@ jobs:
         with:
           name: release-installers
           path: |
-            dist/localjev-grep-installers-*.tar.gz
-            dist/localjev-grep-installers-*.zip
-            dist/localjev-grep-installers-*.sha256
+            dist/jgrep-installers-*.tar.gz
+            dist/jgrep-installers-*.zip
+            dist/jgrep-installers-*.sha256
           if-no-files-found: error
 
   release-model-smoke:
@@ -425,7 +425,7 @@ jobs:
         shell: pwsh
         env:
           TARGET: ${{ matrix.target }}
-        run: cargo build --locked --release --package localjev-grep --target $env:TARGET
+        run: cargo build --locked --release --package jgrep --target $env:TARGET
 
       - name: Download, validate, and score positive and negative real-model fixtures
         shell: pwsh
@@ -480,12 +480,12 @@ jobs:
 
           version="${GITHUB_REF_NAME#v}"
           expected_archives=(
-            "localjev-grep-v${version}-x86_64-unknown-linux-gnu.tar.gz"
-            "localjev-grep-v${version}-x86_64-apple-darwin.tar.gz"
-            "localjev-grep-v${version}-aarch64-apple-darwin.tar.gz"
-            "localjev-grep-v${version}-x86_64-pc-windows-msvc.zip"
-            "localjev-grep-installers-v${version}.tar.gz"
-            "localjev-grep-installers-v${version}.zip"
+            "jgrep-v${version}-x86_64-unknown-linux-gnu.tar.gz"
+            "jgrep-v${version}-x86_64-apple-darwin.tar.gz"
+            "jgrep-v${version}-aarch64-apple-darwin.tar.gz"
+            "jgrep-v${version}-x86_64-pc-windows-msvc.zip"
+            "jgrep-installers-v${version}.tar.gz"
+            "jgrep-installers-v${version}.zip"
           )
           for archive in "${expected_archives[@]}"; do
             test -f "$archive"
@@ -510,5 +510,5 @@ jobs:
           fi
           gh release create "$GITHUB_REF_NAME" release-assets/* \
             --verify-tag \
-            --title "localjev-grep $GITHUB_REF_NAME" \
+            --title "jgrep $GITHUB_REF_NAME" \
             --generate-notes

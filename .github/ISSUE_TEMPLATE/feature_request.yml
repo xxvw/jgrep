@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an improvement to localjev-grep or jgrep
+description: Suggest an improvement to jgrep or jgrep
 title: "feature: "
 body:
   - type: markdown

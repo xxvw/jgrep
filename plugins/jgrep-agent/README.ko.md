@@ -7,13 +7,13 @@
 
 먼저 에이전트 프로세스의 `PATH`에서 `jgrep`를 실행할 수 있도록 설치합니다. 지원
 플랫폼, 한 줄 설치, 수동 설치와 오프라인 설치는 프로젝트의
-[README](https://github.com/xxvw/localjev-grep/blob/main/README.md) 및
-[설치와 에이전트 통합 안내](https://github.com/xxvw/localjev-grep/blob/main/docs/installation-and-agents.md)를 참고하세요.
+[README](https://github.com/xxvw/jgrep/blob/main/README.md) 및
+[설치와 에이전트 통합 안내](https://github.com/xxvw/jgrep/blob/main/docs/installation-and-agents.md)를 참고하세요.
 
 그런 다음 Codex에 마켓플레이스와 플러그인을 추가하고 새 Codex 세션을 시작합니다.
 
 ```sh
-codex plugin marketplace add xxvw/localjev-grep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@localjev-grep
+codex plugin marketplace add xxvw/jgrep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@jgrep
 ```
 
 플러그인을 실행하는 프로세스의 `PATH`에도 `jgrep` 설치 디렉터리가 포함되어야 합니다.

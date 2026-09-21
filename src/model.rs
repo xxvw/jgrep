@@ -136,10 +136,7 @@ fn download_default_model(directory: &Path, destination: &Path) -> Result<()> {
 
         let outcome = (|| -> Result<()> {
             let mut response = ureq::get(DEFAULT_MODEL_URL)
-                .header(
-                    "User-Agent",
-                    concat!("localjev-grep/", env!("CARGO_PKG_VERSION")),
-                )
+                .header("User-Agent", concat!("jgrep/", env!("CARGO_PKG_VERSION")))
                 .call()
                 .context("could not download the pinned Qwen model")?;
             let mut reader = response.body_mut().as_reader();

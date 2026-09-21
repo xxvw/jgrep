@@ -543,7 +543,7 @@ fn check_docs() -> Result<(), String> {
         &format!("## [{RELEASE_VERSION}]"),
     )?;
     let results = read_text("eval/RESULTS-v0.1.0.md")?;
-    require_contains("eval/RESULTS-v0.1.0.md", &results, "localjev-grep v0.1.0")?;
+    require_contains("eval/RESULTS-v0.1.0.md", &results, "jgrep v0.1.0")?;
 
     let installer_guide = read_text("docs/installation-and-agents.md")?;
     for required in [
@@ -762,7 +762,7 @@ fn require_json_string(
 fn check_marketplace_manifest() -> Result<(), String> {
     let path = ".agents/plugins/marketplace.json";
     let manifest = parse_json(path)?;
-    require_json_string(path, &manifest, "/name", "localjev-grep")?;
+    require_json_string(path, &manifest, "/name", "jgrep")?;
 
     let plugins = manifest
         .pointer("/plugins")

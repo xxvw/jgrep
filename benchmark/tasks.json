@@ -1,0 +1,17 @@
+[
+  {
+    "id": "repository-rename-audit",
+    "needle": "localjev-grep",
+    "request": "Report the first five distinct path:line matches from the search output, in output order. Add one short sentence describing what these matches have in common."
+  },
+  {
+    "id": "project-name-locations",
+    "needle": "jgrep",
+    "request": "Report the first five distinct path:line matches from the search output, in output order. Add one short sentence describing what these matches have in common."
+  },
+  {
+    "id": "semantic-feature-locations",
+    "needle": "semantic",
+    "request": "Report the first five distinct path:line matches from the search output, in output order. Add one short sentence describing what these matches have in common."
+  }
+]

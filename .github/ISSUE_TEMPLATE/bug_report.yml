@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem with localjev-grep or jgrep
+description: Report a reproducible problem with jgrep or jgrep
 title: "bug: "
 body:
   - type: markdown

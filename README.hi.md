@@ -1,8 +1,8 @@
-# localjev-grep
+# jgrep
 
 `jgrep` स्थानीय रूप से चलने वाला, अर्थ-आधारित खोज के लिए grep-जैसा कमांड है। यह प्राकृतिक-भाषा संदर्भ से इनपुट की संबंधित पंक्तियाँ चुनता है और `grep` वाली फ़ाइल तथा पाइप कार्यप्रणाली बनाए रखता है।
 
-> **v0.1.1:** संस्करण-युक्त नेटिव आर्काइव [GitHub Releases](https://github.com/xxvw/localjev-grep/releases) पर उपलब्ध हैं। यह परियोजना बेंचमार्क, सटीकता, थ्रूपुट या विलंबता की कोई गारंटी नहीं देती।
+> **v0.1.1:** संस्करण-युक्त नेटिव आर्काइव [GitHub Releases](https://github.com/xxvw/jgrep/releases) पर उपलब्ध हैं। यह परियोजना बेंचमार्क, सटीकता, थ्रूपुट या विलंबता की कोई गारंटी नहीं देती।
 
 डिफ़ॉल्ट अर्थ-आधारित मोड स्थानीय [Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct) मॉडल से यह द्विआधारी निर्णय लेता है कि प्रत्येक पंक्ति संदर्भ से संबंधित है या नहीं। खोजा गया टेक्स्ट किसी होस्टेड मॉडल को नहीं भेजा जाता; Python, Ollama या लगातार चलने वाली सेवा की जरूरत नहीं है। `-E` Rust रेगुलर एक्सप्रेशन और `-F` निश्चित-स्ट्रिंग मोड चुनते हैं; इनमें मॉडल डाउनलोड या लोड नहीं होता।
 
@@ -23,7 +23,7 @@ Bash या zsh में यह एक संयुक्त कमांड �
   archive="localjev-grep-installers-${version}.tar.gz"
   workdir="$(mktemp -d)"
   trap 'rm -rf "$workdir"' EXIT
-  base="https://github.com/xxvw/localjev-grep/releases/download/${version}"
+  base="https://github.com/xxvw/jgrep/releases/download/${version}"
   curl --fail --silent --show-error --location --proto '=https' \
     --proto-redir '=https' -o "$workdir/$archive" "$base/$archive"
   curl --fail --silent --show-error --location --proto '=https' \
@@ -51,7 +51,7 @@ PowerShell में यह एक कमांड ब्लॉक पेस्�
   $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid())
   New-Item -ItemType Directory -Path $workdir | Out-Null
   try {
-    $base = "https://github.com/xxvw/localjev-grep/releases/download/$version"
+    $base = "https://github.com/xxvw/jgrep/releases/download/$version"
     Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive" -OutFile (Join-Path $workdir $archive)
     Invoke-WebRequest -UseBasicParsing -Uri "$base/$archive.sha256" -OutFile (Join-Path $workdir "$archive.sha256")
     $manifest = (Get-Content -LiteralPath (Join-Path $workdir "$archive.sha256") -Raw).Trim()
@@ -83,8 +83,8 @@ PowerShell ब्लॉक में इंस्टॉलर कॉल की �
 स्रोत से बनाने के लिए `rust-toolchain.toml` में पिन किया Rust टूलचेन, CMake और एम्बेड किए गए llama.cpp को बनाने वाला C++ कंपाइलर चाहिए। यदि आप स्वयं बिल्ड करना चाहते हैं, असमर्थित आर्किटेक्चर पर काम कर रहे हैं, या पुराने Linux पर हैं जो glibc 2.35 की शर्त पूरी नहीं करता, तो इस विकल्प का उपयोग करें:
 
 ```sh
-git clone https://github.com/xxvw/localjev-grep.git
-cd localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+cd jgrep
 cargo build --release
 ./target/release/jgrep --help
 ```
@@ -92,8 +92,8 @@ cargo build --release
 Windows PowerShell में:
 
 ```powershell
-git clone https://github.com/xxvw/localjev-grep.git
-Set-Location localjev-grep
+git clone https://github.com/xxvw/jgrep.git
+Set-Location jgrep
 cargo build --release
 .\target\release\jgrep.exe --help
 ```

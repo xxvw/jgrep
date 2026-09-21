@@ -7,8 +7,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-readonly START_MESSAGE='Запускается программа установки localjev-grep…'
-readonly ROOT_ERROR='Общий установщик не найден. Запустите этот скрипт из проверенного установочного пакета localjev-grep.'
+readonly START_MESSAGE='Запускается программа установки jgrep…'
+readonly ROOT_ERROR='Общий установщик не найден. Запустите этот скрипт из проверенного установочного пакета jgrep.'
 
 wrapper_directory="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 installer_directory="$(cd -P -- "${wrapper_directory}/.." && pwd)"

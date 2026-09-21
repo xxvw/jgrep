@@ -1,7 +1,7 @@
 {
-  "name": "localjev-grep",
+  "name": "jgrep",
   "interface": {
-    "displayName": "Localjev Grep"
+    "displayName": "jgrep"
   },
   "plugins": [
     {

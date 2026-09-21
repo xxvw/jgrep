@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 
-use localjev_grep::{cli, run_cli};
+use jgrep::{cli, run_cli};
 
 fn main() -> ExitCode {
     match run_cli(cli::parse()) {

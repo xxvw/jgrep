@@ -10,7 +10,7 @@ user's corpus.
 | Property | Value |
 | --- | --- |
 | Date | 2026-09-20 |
-| Source / binary | localjev-grep v0.1.0 release build |
+| Source / binary | jgrep v0.1.0 release build |
 | Fixture | `eval/semantic-v1.jsonl` (24 cases) |
 | Model | Qwen2.5-0.5B-Instruct Q8_0 GGUF |
 | Model revision | `6dd44a1fb35d11b5d1b28902876ce3cc9e882d0e` |

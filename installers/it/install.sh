@@ -7,8 +7,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-readonly START_MESSAGE='Avvio del programma di installazione di localjev-grep…'
-readonly ROOT_ERROR='Il programma di installazione comune non è stato trovato. Esegui questo script dal pacchetto di installazione verificato di localjev-grep.'
+readonly START_MESSAGE='Avvio del programma di installazione di jgrep…'
+readonly ROOT_ERROR='Il programma di installazione comune non è stato trovato. Esegui questo script dal pacchetto di installazione verificato di jgrep.'
 
 wrapper_directory="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 installer_directory="$(cd -P -- "${wrapper_directory}/.." && pwd)"

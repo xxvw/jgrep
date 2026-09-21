@@ -23,8 +23,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$StartMessage = 'يتم بدء مثبّت localjev-grep…'
-$RootError = 'لم يتم العثور على المثبّت المشترك. شغّل هذا البرنامج النصي من حزمة تثبيت localjev-grep التي تم التحقق منها.'
+$StartMessage = 'يتم بدء مثبّت jgrep…'
+$RootError = 'لم يتم العثور على المثبّت المشترك. شغّل هذا البرنامج النصي من حزمة تثبيت jgrep التي تم التحقق منها.'
 
 if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
     throw $RootError

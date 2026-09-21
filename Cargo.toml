@@ -3,14 +3,14 @@ members = ["xtask"]
 resolver = "2"
 
 [package]
-name = "localjev-grep"
+name = "jgrep"
 version = "0.1.1"
 edition = "2024"
 rust-version = "1.85"
 description = "A local semantic grep powered by Qwen2.5-0.5B-Instruct"
 license = "GPL-3.0-or-later"
-repository = "https://github.com/xxvw/localjev-grep"
-homepage = "https://github.com/xxvw/localjev-grep"
+repository = "https://github.com/xxvw/jgrep"
+homepage = "https://github.com/xxvw/jgrep"
 keywords = ["grep", "semantic-search", "qwen", "cli"]
 categories = ["command-line-utilities", "text-processing"]
 readme = "README.md"

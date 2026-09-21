@@ -23,8 +23,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$StartMessage = 'Starting the localjev-grep installer…'
-$RootError = 'The common installer was not found. Run this script from the verified localjev-grep installer bundle.'
+$StartMessage = 'Starting the jgrep installer…'
+$RootError = 'The common installer was not found. Run this script from the verified jgrep installer bundle.'
 
 if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
     throw $RootError

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the localized localjev-grep installer wrappers.
+"""Generate the localized jgrep installer wrappers.
 
 The wrappers deliberately contain only presentation and deterministic discovery
 of the bundled core installer.  Downloading, checksum verification, archive
@@ -21,52 +21,52 @@ INSTALLER_ROOT = REPOSITORY_ROOT / "installers"
 # Keep this list aligned with the localized project and plugin READMEs.
 LOCALES: dict[str, tuple[str, str]] = {
     "en": (
-        "Starting the localjev-grep installer…",
-        "The common installer was not found. Run this script from the verified localjev-grep installer bundle.",
+        "Starting the jgrep installer…",
+        "The common installer was not found. Run this script from the verified jgrep installer bundle.",
     ),
     "ja": (
-        "localjev-grep のインストーラーを開始します…",
-        "共通インストーラーが見つかりません。検証済みの localjev-grep インストーラーバンドル内でこのスクリプトを実行してください。",
+        "jgrep のインストーラーを開始します…",
+        "共通インストーラーが見つかりません。検証済みの jgrep インストーラーバンドル内でこのスクリプトを実行してください。",
     ),
     "zh-CN": (
-        "正在启动 localjev-grep 安装程序…",
-        "未找到通用安装程序。请在已验证的 localjev-grep 安装程序包中运行此脚本。",
+        "正在启动 jgrep 安装程序…",
+        "未找到通用安装程序。请在已验证的 jgrep 安装程序包中运行此脚本。",
     ),
     "ko": (
-        "localjev-grep 설치 프로그램을 시작합니다…",
-        "공통 설치 프로그램을 찾을 수 없습니다. 검증된 localjev-grep 설치 프로그램 번들에서 이 스크립트를 실행하세요.",
+        "jgrep 설치 프로그램을 시작합니다…",
+        "공통 설치 프로그램을 찾을 수 없습니다. 검증된 jgrep 설치 프로그램 번들에서 이 스크립트를 실행하세요.",
     ),
     "es": (
-        "Iniciando el instalador de localjev-grep…",
-        "No se encontró el instalador común. Ejecute este script desde el paquete de instalación verificado de localjev-grep.",
+        "Iniciando el instalador de jgrep…",
+        "No se encontró el instalador común. Ejecute este script desde el paquete de instalación verificado de jgrep.",
     ),
     "de": (
-        "Das Installationsprogramm für localjev-grep wird gestartet…",
-        "Das gemeinsame Installationsprogramm wurde nicht gefunden. Führen Sie dieses Skript aus dem verifizierten localjev-grep-Installationspaket aus.",
+        "Das Installationsprogramm für jgrep wird gestartet…",
+        "Das gemeinsame Installationsprogramm wurde nicht gefunden. Führen Sie dieses Skript aus dem verifizierten jgrep-Installationspaket aus.",
     ),
     "ru": (
-        "Запускается программа установки localjev-grep…",
-        "Общий установщик не найден. Запустите этот скрипт из проверенного установочного пакета localjev-grep.",
+        "Запускается программа установки jgrep…",
+        "Общий установщик не найден. Запустите этот скрипт из проверенного установочного пакета jgrep.",
     ),
     "fr": (
-        "Démarrage du programme d’installation de localjev-grep…",
-        "Le programme d’installation commun est introuvable. Exécutez ce script depuis le paquet d’installation localjev-grep vérifié.",
+        "Démarrage du programme d’installation de jgrep…",
+        "Le programme d’installation commun est introuvable. Exécutez ce script depuis le paquet d’installation jgrep vérifié.",
     ),
     "pt-BR": (
-        "Iniciando o instalador do localjev-grep…",
-        "O instalador comum não foi encontrado. Execute este script a partir do pacote de instalação verificado do localjev-grep.",
+        "Iniciando o instalador do jgrep…",
+        "O instalador comum não foi encontrado. Execute este script a partir do pacote de instalação verificado do jgrep.",
     ),
     "it": (
-        "Avvio del programma di installazione di localjev-grep…",
-        "Il programma di installazione comune non è stato trovato. Esegui questo script dal pacchetto di installazione verificato di localjev-grep.",
+        "Avvio del programma di installazione di jgrep…",
+        "Il programma di installazione comune non è stato trovato. Esegui questo script dal pacchetto di installazione verificato di jgrep.",
     ),
     "ar": (
-        "يتم بدء مثبّت localjev-grep…",
-        "لم يتم العثور على المثبّت المشترك. شغّل هذا البرنامج النصي من حزمة تثبيت localjev-grep التي تم التحقق منها.",
+        "يتم بدء مثبّت jgrep…",
+        "لم يتم العثور على المثبّت المشترك. شغّل هذا البرنامج النصي من حزمة تثبيت jgrep التي تم التحقق منها.",
     ),
     "hi": (
-        "localjev-grep इंस्टॉलर शुरू किया जा रहा है…",
-        "सामान्य इंस्टॉलर नहीं मिला। इस स्क्रिप्ट को सत्यापित localjev-grep इंस्टॉलर बंडल से चलाएँ।",
+        "jgrep इंस्टॉलर शुरू किया जा रहा है…",
+        "सामान्य इंस्टॉलर नहीं मिला। इस स्क्रिप्ट को सत्यापित jgrep इंस्टॉलर बंडल से चलाएँ।",
     ),
 }
 

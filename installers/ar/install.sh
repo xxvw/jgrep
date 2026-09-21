@@ -7,8 +7,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-readonly START_MESSAGE='يتم بدء مثبّت localjev-grep…'
-readonly ROOT_ERROR='لم يتم العثور على المثبّت المشترك. شغّل هذا البرنامج النصي من حزمة تثبيت localjev-grep التي تم التحقق منها.'
+readonly START_MESSAGE='يتم بدء مثبّت jgrep…'
+readonly ROOT_ERROR='لم يتم العثور على المثبّت المشترك. شغّل هذا البرنامج النصي من حزمة تثبيت jgrep التي تم التحقق منها.'
 
 wrapper_directory="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 installer_directory="$(cd -P -- "${wrapper_directory}/.." && pwd)"

@@ -7,8 +7,8 @@
     "name": "xxvw",
     "url": "https://github.com/xxvw"
   },
-  "homepage": "https://github.com/xxvw/localjev-grep/tree/main/plugins/jgrep-agent",
-  "repository": "https://github.com/xxvw/localjev-grep",
+  "homepage": "https://github.com/xxvw/jgrep/tree/main/plugins/jgrep-agent",
+  "repository": "https://github.com/xxvw/jgrep",
   "license": "GPL-3.0-or-later",
   "keywords": [
     "jgrep",

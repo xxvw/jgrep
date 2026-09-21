@@ -7,8 +7,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-readonly START_MESSAGE='localjev-grep इंस्टॉलर शुरू किया जा रहा है…'
-readonly ROOT_ERROR='सामान्य इंस्टॉलर नहीं मिला। इस स्क्रिप्ट को सत्यापित localjev-grep इंस्टॉलर बंडल से चलाएँ।'
+readonly START_MESSAGE='jgrep इंस्टॉलर शुरू किया जा रहा है…'
+readonly ROOT_ERROR='सामान्य इंस्टॉलर नहीं मिला। इस स्क्रिप्ट को सत्यापित jgrep इंस्टॉलर बंडल से चलाएँ।'
 
 wrapper_directory="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 installer_directory="$(cd -P -- "${wrapper_directory}/.." && pwd)"

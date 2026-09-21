@@ -1,0 +1,146 @@
+{
+  "generated_at": "2026-09-21T14:45:35Z",
+  "source_commit": "e07fecd08953d7bb29b5258c12559318c91b9405",
+  "codex_version": "codex-cli 0.154.0",
+  "jgrep_version": "jgrep 0.1.1",
+  "model": "gpt-5.6-luna",
+  "reasoning_effort": "low",
+  "repetitions": 1,
+  "runs": [
+    {
+      "task": "repository-rename-audit",
+      "mode": "rg",
+      "repetition": 1,
+      "usage": {
+        "input_tokens": 32118,
+        "cached_input_tokens": 19968,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 270,
+        "reasoning_output_tokens": 80
+      },
+      "total_tokens": 32388,
+      "non_cached_input_tokens": 12150,
+      "tool_output_chars": 32177,
+      "commands": [
+        "/bin/zsh -c \"rg --hidden --sort path -n -F -- 'localjev-grep' .\""
+      ],
+      "answer": "./.agents/plugins/marketplace.json:2  \n./.github/ISSUE_TEMPLATE/bug_report.yml:2  \n./.github/ISSUE_TEMPLATE/feature_request.yml:2  \n./.github/workflows/ci.yml:100  \n./.github/workflows/ci.yml:179  \n\nAll five reference the `localjev-grep` project or package."
+    },
+    {
+      "task": "repository-rename-audit",
+      "mode": "jgrep",
+      "repetition": 1,
+      "usage": {
+        "input_tokens": 22978,
+        "cached_input_tokens": 19968,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 279,
+        "reasoning_output_tokens": 73
+      },
+      "total_tokens": 23257,
+      "non_cached_input_tokens": 3010,
+      "tool_output_chars": 931,
+      "commands": [
+        "/bin/zsh -lc \"jgrep --ai --ai-max-results 25 -r -F -e 'localjev-grep' .\""
+      ],
+      "answer": "1. `./.agents/plugins/marketplace.json:2`\n2. `./.github/ISSUE_TEMPLATE/bug_report.yml:2`\n3. `./.github/ISSUE_TEMPLATE/feature_request.yml:2`\n4. `./.github/workflows/ci.yml:100`\n5. `./.github/workflows/ci.yml:179`\n\nThey all contain the exact needle `localjev-grep`."
+    },
+    {
+      "task": "project-name-locations",
+      "mode": "rg",
+      "repetition": 1,
+      "usage": {
+        "input_tokens": 33883,
+        "cached_input_tokens": 17920,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 331,
+        "reasoning_output_tokens": 147
+      },
+      "total_tokens": 34214,
+      "non_cached_input_tokens": 15963,
+      "tool_output_chars": 54763,
+      "commands": [
+        "/bin/zsh -lc \"rg --hidden --sort path -n -F -- 'jgrep' .\""
+      ],
+      "answer": "./.agents/plugins/marketplace.json:8  \n./.agents/plugins/marketplace.json:11  \n./.github/ISSUE_TEMPLATE/bug_report.yml:2  \n./.github/ISSUE_TEMPLATE/bug_report.yml:15  \n./.github/ISSUE_TEMPLATE/bug_report.yml:16  \n\nThese matches all reference `jgrep` in repository configuration or issue-template text."
+    },
+    {
+      "task": "project-name-locations",
+      "mode": "jgrep",
+      "repetition": 1,
+      "usage": {
+        "input_tokens": 22969,
+        "cached_input_tokens": 19968,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 239,
+        "reasoning_output_tokens": 58
+      },
+      "total_tokens": 23208,
+      "non_cached_input_tokens": 3001,
+      "tool_output_chars": 1021,
+      "commands": [
+        "/bin/zsh -lc \"jgrep --ai --ai-max-results 25 -r -F -e 'jgrep' .\""
+      ],
+      "answer": "./.agents/plugins/marketplace.json:8  \n./.agents/plugins/marketplace.json:11  \n./.github/ISSUE_TEMPLATE/bug_report.yml:2  \n./.github/ISSUE_TEMPLATE/bug_report.yml:15  \n./.github/ISSUE_TEMPLATE/bug_report.yml:16  \n\nAll are lines containing the needle `jgrep`."
+    },
+    {
+      "task": "semantic-feature-locations",
+      "mode": "rg",
+      "repetition": 1,
+      "usage": {
+        "input_tokens": 25747,
+        "cached_input_tokens": 19968,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 283,
+        "reasoning_output_tokens": 98
+      },
+      "total_tokens": 26030,
+      "non_cached_input_tokens": 5779,
+      "tool_output_chars": 12341,
+      "commands": [
+        "/bin/zsh -lc \"rg --hidden --sort path -n -F -- 'semantic' .\""
+      ],
+      "answer": "1. `./.github/workflows/ci.yml:13`\n2. `./.github/workflows/ci.yml:14`\n3. `./.github/workflows/ci.yml:127`\n4. `./.github/workflows/ci.yml:128`\n5. `./.github/workflows/ci.yml:136`\n\nAll five matches reference semantic smoke-test configuration in the CI workflow."
+    },
+    {
+      "task": "semantic-feature-locations",
+      "mode": "jgrep",
+      "repetition": 1,
+      "usage": {
+        "input_tokens": 22904,
+        "cached_input_tokens": 19968,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 233,
+        "reasoning_output_tokens": 50
+      },
+      "total_tokens": 23137,
+      "non_cached_input_tokens": 2936,
+      "tool_output_chars": 751,
+      "commands": [
+        "/bin/zsh -lc \"jgrep --ai --ai-max-results 25 -r -F -e 'semantic' .\""
+      ],
+      "answer": "- `./.github/workflows/ci.yml:13`\n- `./.github/workflows/ci.yml:14`\n- `./.github/workflows/ci.yml:127`\n- `./.github/workflows/ci.yml:128`\n- `./.github/workflows/ci.yml:136`\n\nAll five matches are in the CI workflow configuration."
+    }
+  ],
+  "aggregate": {
+    "rg": {
+      "total_tokens": 92632,
+      "input_tokens": 91748,
+      "cached_input_tokens": 57856,
+      "output_tokens": 884,
+      "non_cached_input_tokens": 33892,
+      "tool_output_chars": 99281
+    },
+    "jgrep": {
+      "total_tokens": 69602,
+      "input_tokens": 68851,
+      "cached_input_tokens": 59904,
+      "output_tokens": 751,
+      "non_cached_input_tokens": 8947,
+      "tool_output_chars": 2703
+    },
+    "total_token_reduction_percent": 24.8618188099145,
+    "non_cached_input_token_reduction_percent": 73.60143986781542,
+    "tool_output_char_reduction_percent": 97.27742468347418
+  }
+}

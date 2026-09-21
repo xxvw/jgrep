@@ -1,5 +1,5 @@
 <#
-Installs a verified localjev-grep Windows x64 release for the current user.
+Installs a verified jgrep Windows x64 release for the current user.
 
 Run this script from a reviewed checkout or a reviewed, versioned source URL.
 It deliberately does not support `Invoke-WebRequest ... | Invoke-Expression`.
@@ -26,10 +26,10 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-$DefaultRepository = "xxvw/localjev-grep"
+$DefaultRepository = "xxvw/jgrep"
 $GitHubHeaders = @{
     Accept = "application/vnd.github+json"
-    "User-Agent" = "localjev-grep-installer"
+    "User-Agent" = "jgrep-installer"
 }
 
 function Fail {
@@ -603,12 +603,17 @@ else {
     }
 }
 
-$packageRoot = "localjev-grep-$tag-$Target"
+$packageRoot = if ($tag -in @("v0.1.0", "v0.1.1")) {
+    "localjev-grep-$tag-$Target"
+}
+else {
+    "jgrep-$tag-$Target"
+}
 $archiveName = "$packageRoot.$archiveFormat"
 $checksumName = "$archiveName.sha256"
 $entryName = "$packageRoot/jgrep.exe"
 $temporaryRoot = Join-Path ([System.IO.Path]::GetTempPath()) (
-    "localjev-grep-install-" + [guid]::NewGuid().ToString("N")
+    "jgrep-install-" + [guid]::NewGuid().ToString("N")
 )
 
 New-Item -ItemType Directory -Path $temporaryRoot | Out-Null

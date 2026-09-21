@@ -1,4 +1,4 @@
-# Releasing localjev-grep
+# Releasing jgrep
 
 This runbook describes the checks a maintainer should complete before creating
 a public release. It does not indicate that a release or release artifact

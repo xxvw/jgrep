@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install a verified localjev-grep release archive on macOS or Linux.
+# Install a verified jgrep release archive on macOS or Linux.
 #
 # This script deliberately downloads an archive and its checksum before doing
 # anything with the executable. It is intended to be downloaded or run from a
@@ -9,7 +9,7 @@ set -euo pipefail
 IFS=$'\n\t'
 umask 077
 
-readonly DEFAULT_REPOSITORY="xxvw/localjev-grep"
+readonly DEFAULT_REPOSITORY="xxvw/jgrep"
 
 repository="${JGREP_REPOSITORY:-$DEFAULT_REPOSITORY}"
 version="${JGREP_VERSION:-}"
@@ -24,7 +24,7 @@ usage() {
     cat <<'EOF'
 Usage: install.sh [OPTIONS]
 
-Install a verified localjev-grep release archive for this macOS or Linux host.
+Install a verified jgrep release archive for this macOS or Linux host.
 Without --version, the script resolves the latest published GitHub Release.
 
 Options:
@@ -243,12 +243,15 @@ fi
 require_command tar
 require_command awk
 
-package_root="localjev-grep-${tag}-${target}"
+case "$tag" in
+    v0.1.0|v0.1.1) package_root="localjev-grep-${tag}-${target}" ;;
+    *) package_root="jgrep-${tag}-${target}" ;;
+esac
 archive_name="${package_root}.tar.gz"
 checksum_name="${archive_name}.sha256"
 binary_member="${package_root}/jgrep"
 
-temporary_directory="$(mktemp -d "${TMPDIR:-/tmp}/localjev-grep-install.XXXXXXXX")" \
+temporary_directory="$(mktemp -d "${TMPDIR:-/tmp}/jgrep-install.XXXXXXXX")" \
     || die "could not create a temporary directory"
 archive_path="${temporary_directory}/${archive_name}"
 checksum_path="${temporary_directory}/${checksum_name}"

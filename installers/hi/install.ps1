@@ -23,8 +23,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$StartMessage = 'localjev-grep इंस्टॉलर शुरू किया जा रहा है…'
-$RootError = 'सामान्य इंस्टॉलर नहीं मिला। इस स्क्रिप्ट को सत्यापित localjev-grep इंस्टॉलर बंडल से चलाएँ।'
+$StartMessage = 'jgrep इंस्टॉलर शुरू किया जा रहा है…'
+$RootError = 'सामान्य इंस्टॉलर नहीं मिला। इस स्क्रिप्ट को सत्यापित jgrep इंस्टॉलर बंडल से चलाएँ।'
 
 if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
     throw $RootError

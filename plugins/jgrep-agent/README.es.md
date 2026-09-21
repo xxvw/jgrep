@@ -9,13 +9,13 @@ origen pertinentes y se reduce el volumen de las llamadas a herramientas.
 En Codex, añada el marketplace local de este repositorio e instale el plugin:
 
 ~~~sh
-codex plugin marketplace add xxvw/localjev-grep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@localjev-grep
+codex plugin marketplace add xxvw/jgrep --ref main --sparse .agents/plugins --sparse plugins/jgrep-agent && codex plugin add jgrep-agent@jgrep
 ~~~
 
 Inicie una sesión nueva de Codex después de instalarlo. Instale después el
 ejecutable jgrep con las instrucciones del
-[README principal](https://github.com/xxvw/localjev-grep/blob/main/README.md) o de la
-[guía de instalación y agentes](https://github.com/xxvw/localjev-grep/blob/main/docs/installation-and-agents.md).
+[README principal](https://github.com/xxvw/jgrep/blob/main/README.md) o de la
+[guía de instalación y agentes](https://github.com/xxvw/jgrep/blob/main/docs/installation-and-agents.md).
 
 ## Flujo de trabajo del agente
 

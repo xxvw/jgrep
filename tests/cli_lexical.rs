@@ -5,7 +5,7 @@
 //! the native and release builds.
 
 use assert_cmd::Command as AssertCommand;
-use localjev_grep::model::DEFAULT_MODEL_FILE;
+use jgrep::model::DEFAULT_MODEL_FILE;
 use predicates::prelude::*;
 use std::fs;
 use std::io::{BufRead, BufReader, Write};

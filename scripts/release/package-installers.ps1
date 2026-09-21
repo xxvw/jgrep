@@ -73,7 +73,7 @@ $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 $out = [System.IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 
-$bundleRoot = "localjev-grep-installers-v$Version"
+$bundleRoot = "jgrep-installers-v$Version"
 $stage = Join-Path $out $bundleRoot
 if (Test-Path -LiteralPath $stage) {
     Remove-Item -LiteralPath $stage -Recurse -Force
@@ -105,7 +105,7 @@ try {
     }
 
     $sourceNotice = @(
-        "localjev-grep installer source and build instructions"
+        "jgrep installer source and build instructions"
         ""
         "Corresponding source for these GPL-3.0-or-later installer files is available at:"
         "https://github.com/$Repository/tree/$Ref"

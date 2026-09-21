@@ -7,8 +7,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-readonly START_MESSAGE='localjev-grep のインストーラーを開始します…'
-readonly ROOT_ERROR='共通インストーラーが見つかりません。検証済みの localjev-grep インストーラーバンドル内でこのスクリプトを実行してください。'
+readonly START_MESSAGE='jgrep のインストーラーを開始します…'
+readonly ROOT_ERROR='共通インストーラーが見つかりません。検証済みの jgrep インストーラーバンドル内でこのスクリプトを実行してください。'
 
 wrapper_directory="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 installer_directory="$(cd -P -- "${wrapper_directory}/.." && pwd)"
