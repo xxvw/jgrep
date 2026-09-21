@@ -299,12 +299,14 @@ jobs:
             }
           }
 
-          $required = @(
+          # Check files and directories separately. `tar -t` records directory
+          # entries with a trailing slash, while a generic existence check in the
+          # extracted ZIP could otherwise let a directory satisfy a file requirement.
+          $requiredFiles = @(
             "README.md",
             "LICENSE",
             "NOTICE",
             "THIRD_PARTY_NOTICES.md",
-            "LICENSES",
             "SOURCE.txt",
             "AGENTS.md",
             "CHANGELOG.md",
@@ -320,22 +322,28 @@ jobs:
             "plugins/jgrep-agent/.codex-plugin/plugin.json",
             "plugins/jgrep-agent/skills/jgrep-agent/SKILL.md"
           )
+          $requiredDirectories = @("LICENSES")
           $locales = @("en", "ja", "zh-CN", "ko", "es", "de", "ru", "fr", "pt-BR", "it", "ar", "hi")
           foreach ($locale in $locales) {
-            $required += "installers/$locale/install.sh"
-            $required += "installers/$locale/install.ps1"
+            $requiredFiles += "installers/$locale/install.sh"
+            $requiredFiles += "installers/$locale/install.ps1"
             if ($locale -eq "en") {
-              $required += "plugins/jgrep-agent/README.md"
+              $requiredFiles += "plugins/jgrep-agent/README.md"
             } else {
-              $required += "plugins/jgrep-agent/README.$locale.md"
+              $requiredFiles += "plugins/jgrep-agent/README.$locale.md"
             }
           }
 
           $tarContents = @(& tar -tzf $archives[0])
           if ($LASTEXITCODE -ne 0) { throw "could not list $($archives[0])" }
-          foreach ($path in $required) {
+          foreach ($path in $requiredFiles) {
             if ($tarContents -notcontains "$bundleRoot/$path") {
-              throw "installer tarball is missing required content: $path"
+              throw "installer tarball is missing required file: $path"
+            }
+          }
+          foreach ($path in $requiredDirectories) {
+            if ($tarContents -notcontains "$bundleRoot/$path/") {
+              throw "installer tarball is missing required directory: $path"
             }
           }
 
@@ -345,9 +353,14 @@ jobs:
           }
           Expand-Archive -LiteralPath $archives[1] -DestinationPath $verifyDirectory -Force
           $contents = Join-Path $verifyDirectory $bundleRoot
-          foreach ($path in $required) {
-            if (-not (Test-Path -LiteralPath (Join-Path $contents $path))) {
-              throw "installer zip is missing required content: $path"
+          foreach ($path in $requiredFiles) {
+            if (-not (Test-Path -LiteralPath (Join-Path $contents $path) -PathType Leaf)) {
+              throw "installer zip is missing required file: $path"
+            }
+          }
+          foreach ($path in $requiredDirectories) {
+            if (-not (Test-Path -LiteralPath (Join-Path $contents $path) -PathType Container)) {
+              throw "installer zip is missing required directory: $path"
             }
           }
 
