@@ -34,7 +34,7 @@ jobs:
     name: Formatting, lint, tests, and docs
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@1.98.1
         with:
@@ -74,7 +74,7 @@ jobs:
             executable_suffix: ".exe"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@1.98.1
         with:
@@ -156,7 +156,7 @@ jobs:
             executable_suffix: ".exe"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@1.98.1
         with:
@@ -167,7 +167,7 @@ jobs:
           key: semantic-${{ matrix.target }}
 
       - name: Restore the pinned Qwen model
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/jgrep-model
           key: qwen2.5-0.5b-instruct-q8_0-6dd44a1fb35d11b5d1b28902876ce3cc9e882d0e-ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e-${{ matrix.target }}
